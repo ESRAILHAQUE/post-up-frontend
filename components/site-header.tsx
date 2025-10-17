@@ -22,8 +22,12 @@ export function SiteHeader() {
             />
           </div>
           <div className="flex flex-col">
-            <span className="text-2xl font-bold text-white tracking-tight">PostUp</span>
-            <span className="text-xs text-emerald-400 font-medium -mt-1">Guest Posting Platform</span>
+            <span className="text-2xl font-bold text-white tracking-tight">
+              PostUp
+            </span>
+            <span className="text-xs text-emerald-400 font-medium -mt-1">
+              Guest Posting Platform
+            </span>
           </div>
         </Link>
 
