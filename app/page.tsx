@@ -6,18 +6,69 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { getSites } from "@/lib/data/mock-data"
 import Link from "next/link"
 import { ArrowRight, CheckCircle2, TrendingUp, Shield, Zap, Star, Globe } from "lucide-react"
 import Image from "next/image"
 import { useEffect, useState } from "react"
+import apiClient from "@/lib/api/client"
+
+interface Site {
+  id: string;
+  name: string;
+  url: string;
+  domain_authority: number;
+  domain_rating: number;
+  monthly_traffic: number;
+  price: number;
+  category: string;
+  description: string;
+  turnaround_days: number;
+  is_active: boolean;
+  image_url: string | null;
+}
 
 export default function HomePage() {
-  const [sites, setSites] = useState<any[]>([])
+  const [sites, setSites] = useState<Site[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    setSites(getSites().slice(0, 6))
+    fetchFeaturedSites()
   }, [])
+
+  async function fetchFeaturedSites() {
+    try {
+      setLoading(true)
+      console.log("[Homepage] Fetching featured sites from backend...")
+      const response = await apiClient.get("/sites")
+      console.log("[Homepage] API Response:", response.data)
+      
+      const featuredSites = (response.data.data || [])
+        .filter((site: any) => site.isActive && site.isFeatured)
+        .slice(0, 6)
+        .map((site: any) => ({
+          id: site._id,
+          name: site.name,
+          url: site.url,
+          domain_authority: site.domainAuthority,
+          domain_rating: site.domainRating,
+          monthly_traffic: site.monthlyTraffic,
+          price: site.price,
+          category: site.category,
+          description: site.description,
+          turnaround_days: site.turnaroundDays,
+          is_active: site.isActive,
+          image_url: site.logoUrl || null,
+        }))
+      
+      console.log("[Homepage] Featured sites:", featuredSites.length)
+      setSites(featuredSites)
+    } catch (error) {
+      console.error("[Homepage] Error fetching featured sites:", error)
+      setSites([])
+    } finally {
+      setLoading(false)
+    }
+  }
 
   return (
     <div className="flex flex-col min-h-screen">
