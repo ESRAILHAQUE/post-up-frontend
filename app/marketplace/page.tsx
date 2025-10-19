@@ -45,7 +45,7 @@ export default function MarketplacePage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [daRange, setDaRange] = useState([0, 100]);
   const [drRange, setDrRange] = useState([0, 100]);
-  const [trafficRange, setTrafficRange] = useState([0, 200000000]);
+  const [trafficRange, setTrafficRange] = useState([0, 500000000000]);
   const [priceRange, setPriceRange] = useState([0, 5000]);
 
   useEffect(() => {
@@ -74,10 +74,7 @@ export default function MarketplacePage() {
       setLoading(true);
     }
     try {
-      console.log("[v0] Fetching sites from backend...");
       const response = await apiClient.get("/sites");
-      console.log("[v0] API Response:", response.data);
-      console.log("[v0] Sites data:", response.data.data);
       const activeSites = (response.data.data || [])
         .filter((site: any) => site.isActive)
         .map((site: any) => ({
@@ -94,7 +91,6 @@ export default function MarketplacePage() {
           is_active: site.isActive,
           image_url: site.imageUrl || site.logoUrl || null,
         }));
-      console.log("[v0] Fetched sites:", activeSites.length);
       setSites(activeSites);
       setFilteredSites(activeSites);
     } catch (error) {
@@ -152,7 +148,6 @@ export default function MarketplacePage() {
     filtered = filtered.filter(
       (site) => site.price >= priceRange[0] && site.price <= priceRange[1]
     );
-
     setFilteredSites(filtered);
   }
 
@@ -169,7 +164,7 @@ export default function MarketplacePage() {
     setSelectedCategories([]);
     setDaRange([0, 100]);
     setDrRange([0, 100]);
-    setTrafficRange([0, 200000000]);
+    setTrafficRange([0, 500000000000]);
     setPriceRange([0, 5000]);
   }
 
@@ -182,7 +177,7 @@ export default function MarketplacePage() {
     drRange[0] > 0 ||
     drRange[1] < 100 ||
     trafficRange[0] > 0 ||
-    trafficRange[1] < 200000000 ||
+    trafficRange[1] < 500000000000 ||
     priceRange[0] > 0 ||
     priceRange[1] < 5000;
 
@@ -299,7 +294,7 @@ export default function MarketplacePage() {
                         value={trafficRange}
                         onValueChange={setTrafficRange}
                         min={0}
-                        max={200000000}
+                        max={500000000000}
                         step={1000000}
                         className="[&_[role=slider]]:bg-emerald-600 [&_[role=slider]]:border-emerald-600"
                       />

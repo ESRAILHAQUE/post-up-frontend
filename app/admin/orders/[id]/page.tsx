@@ -34,6 +34,13 @@ type Order = {
   paid_at?: string;
   completed_at?: string;
   stripe_payment_intent_id?: string;
+  uploaded_documents?: Array<{
+    name: string;
+    size: number;
+    type: string;
+    url: string;
+    publicId?: string;
+  }>;
   site: {
     id: string;
     name: string;
@@ -80,6 +87,7 @@ export default function AdminOrderEditPage({
           paid_at: orderData.paidAt,
           completed_at: orderData.completedAt,
           stripe_payment_intent_id: orderData.stripePaymentIntentId,
+          uploaded_documents: orderData.uploadedDocuments || [],
           site: orderData.site
             ? {
                 id: orderData.site._id,
@@ -289,6 +297,80 @@ export default function AdminOrderEditPage({
               )}
             </CardContent>
           </Card>
+
+          {order.uploaded_documents && order.uploaded_documents.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Uploaded Documents</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {order.uploaded_documents.map((doc, index) => {
+                    const isImage = doc.type.startsWith("image/");
+                    const fileExtension = doc.name
+                      .split(".")
+                      .pop()
+                      ?.toLowerCase();
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {isImage ? (
+                            <div className="w-8 h-8 bg-blue-100 rounded flex items-center justify-center">
+                              <span className="text-sm text-blue-600">📷</span>
+                            </div>
+                          ) : (
+                            <div className="w-8 h-8 bg-gray-100 rounded flex items-center justify-center">
+                              <span className="text-sm text-gray-600">
+                                {fileExtension === "pdf"
+                                  ? "📄"
+                                  : fileExtension === "doc" ||
+                                    fileExtension === "docx"
+                                  ? "📝"
+                                  : fileExtension === "zip" ||
+                                    fileExtension === "rar"
+                                  ? "📦"
+                                  : "📎"}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <p className="font-medium text-sm truncate">
+                              {doc.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {(doc.size / 1024).toFixed(1)} KB • {doc.type}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Button variant="outline" size="sm" asChild>
+                            <a
+                              href={doc.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center gap-1">
+                              <ExternalLink className="h-3 w-3" />
+                              View
+                            </a>
+                          </Button>
+                          <Button variant="outline" size="sm" asChild>
+                            <a
+                              href={doc.url}
+                              download={doc.name}
+                              className="flex items-center gap-1">
+                              Download
+                            </a>
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         <div className="space-y-6">

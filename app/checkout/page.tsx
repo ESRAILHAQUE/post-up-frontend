@@ -113,7 +113,7 @@ function CheckoutForm({
         return;
       }
       // Limit file size to 10MB per file
-      const oversizedFiles = fileArray.filter(f => f.size > 10 * 1024 * 1024);
+      const oversizedFiles = fileArray.filter((f) => f.size > 10 * 1024 * 1024);
       if (oversizedFiles.length > 0) {
         setError("Each file must be less than 10MB");
         return;
@@ -172,19 +172,21 @@ function CheckoutForm({
         // Add type-specific fields
         if (itemType === "package") {
           orderData.packageId = (item as any)._id || item.id;
-          orderData.specialInstructions = specialInstructions || undefined;
+          if (specialInstructions)
+            orderData.specialInstructions = specialInstructions;
         } else {
           orderData.siteId = (item as any)._id || item.id;
           orderData.targetUrl = targetUrl;
           orderData.articleTitle = articleTitle;
-          orderData.articleTopic = articleTopic || undefined;
           orderData.anchorText = anchorText;
-          orderData.keywords = keywords || undefined;
-          orderData.specialInstructions = specialInstructions || undefined;
-          
+          if (articleTopic) orderData.articleTopic = articleTopic;
+          if (keywords) orderData.keywords = keywords;
+          if (specialInstructions)
+            orderData.specialInstructions = specialInstructions;
+
           // Convert files to base64 for storage
           if (uploadedFiles.length > 0) {
-            const filePromises = uploadedFiles.map(file => {
+            const filePromises = uploadedFiles.map((file) => {
               return new Promise((resolve) => {
                 const reader = new FileReader();
                 reader.onloadend = () => {
@@ -192,18 +194,19 @@ function CheckoutForm({
                     name: file.name,
                     size: file.size,
                     type: file.type,
-                    data: reader.result
+                    data: reader.result,
                   });
                 };
                 reader.readAsDataURL(file);
               });
             });
-            
+
             const filesData = await Promise.all(filePromises);
             orderData.uploadedDocuments = filesData;
           }
         }
 
+        console.log("[Checkout] Sending order data:", orderData);
         const orderResponse = await apiClient.post("/orders", orderData);
         const order = orderResponse.data.data;
 
@@ -217,7 +220,28 @@ function CheckoutForm({
       }
     } catch (err: any) {
       console.error("[v0] Checkout error:", err);
-      setError(err.message || "Payment failed. Please try again.");
+      console.error("[v0] Error response:", err.response?.data);
+      console.error("[v0] Error status:", err.response?.status);
+      console.error(
+        "[v0] Full error:",
+        JSON.stringify(err.response?.data, null, 2)
+      );
+
+      let errorMessage = "Payment failed. Please try again.";
+
+      if (err.response?.data) {
+        if (err.response.data.error) {
+          errorMessage = err.response.data.error;
+        } else if (err.response.data.message) {
+          errorMessage = err.response.data.message;
+        } else if (typeof err.response.data === "string") {
+          errorMessage = err.response.data;
+        }
+      } else if (err.message) {
+        errorMessage = err.message;
+      }
+
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -331,42 +355,71 @@ function CheckoutForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="fileUpload">Upload Documents (Optional)</Label>
+              <Label htmlFor="fileUpload">
+                Upload Files & Images (Optional)
+              </Label>
               <Input
                 id="fileUpload"
                 type="file"
                 multiple
-                accept=".doc,.docx,.pdf,.txt"
+                accept=".doc,.docx,.pdf,.txt,.png,.jpg,.jpeg,.gif,.webp,.svg,.zip,.rar"
                 onChange={handleFileUpload}
                 disabled={loading}
                 className="cursor-pointer"
               />
               <p className="text-xs text-muted-foreground">
-                Upload article draft, guidelines, or reference materials (Max 5 files, 10MB each)
+                Upload documents, images, or reference materials (Max 5 files,
+                10MB each)
               </p>
-              
+
               {uploadedFiles.length > 0 && (
                 <div className="mt-2 space-y-2">
-                  {uploadedFiles.map((file, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center justify-between p-2 bg-muted rounded-md">
-                      <div className="flex items-center gap-2 flex-1 min-w-0">
-                        <span className="text-sm truncate">{file.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          ({(file.size / 1024).toFixed(1)} KB)
-                        </span>
+                  {uploadedFiles.map((file, index) => {
+                    const isImage = file.type.startsWith("image/");
+                    const fileExtension = file.name
+                      .split(".")
+                      .pop()
+                      ?.toLowerCase();
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 bg-muted rounded-md">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          {isImage ? (
+                            <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                              <span className="text-xs text-blue-600">📷</span>
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center">
+                              <span className="text-xs text-gray-600">
+                                {fileExtension === "pdf"
+                                  ? "📄"
+                                  : fileExtension === "doc" ||
+                                    fileExtension === "docx"
+                                  ? "📝"
+                                  : fileExtension === "zip" ||
+                                    fileExtension === "rar"
+                                  ? "📦"
+                                  : "📎"}
+                              </span>
+                            </div>
+                          )}
+                          <span className="text-sm truncate">{file.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({(file.size / 1024).toFixed(1)} KB)
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                          disabled={loading}>
+                          Remove
+                        </Button>
                       </div>
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removeFile(index)}
-                        disabled={loading}>
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
