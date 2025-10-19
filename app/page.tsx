@@ -43,7 +43,7 @@ export default function HomePage() {
       console.log("[Homepage] API Response:", response.data)
       
       const featuredSites = (response.data.data || [])
-        .filter((site: any) => site.isActive && site.isFeatured)
+        .filter((site: any) => site.isActive)
         .slice(0, 6)
         .map((site: any) => ({
           id: site._id,
