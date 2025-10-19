@@ -81,7 +81,11 @@ function CheckoutForm({
   const [email, setEmail] = useState("");
   const [targetUrl, setTargetUrl] = useState("");
   const [articleTopic, setArticleTopic] = useState("");
+  const [articleTitle, setArticleTitle] = useState("");
+  const [anchorText, setAnchorText] = useState("");
+  const [keywords, setKeywords] = useState("");
   const [specialInstructions, setSpecialInstructions] = useState("");
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -97,6 +101,30 @@ function CheckoutForm({
       return (item as Package).discounted_price;
     }
     return (item as Site).price;
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      const fileArray = Array.from(files);
+      // Limit to 5 files max
+      if (fileArray.length + uploadedFiles.length > 5) {
+        setError("Maximum 5 files allowed");
+        return;
+      }
+      // Limit file size to 10MB per file
+      const oversizedFiles = fileArray.filter(f => f.size > 10 * 1024 * 1024);
+      if (oversizedFiles.length > 0) {
+        setError("Each file must be less than 10MB");
+        return;
+      }
+      setUploadedFiles([...uploadedFiles, ...fileArray]);
+      setError(null);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -144,11 +172,36 @@ function CheckoutForm({
         // Add type-specific fields
         if (itemType === "package") {
           orderData.packageId = (item as any)._id || item.id;
+          orderData.specialInstructions = specialInstructions || undefined;
         } else {
           orderData.siteId = (item as any)._id || item.id;
           orderData.targetUrl = targetUrl;
+          orderData.articleTitle = articleTitle;
           orderData.articleTopic = articleTopic || undefined;
+          orderData.anchorText = anchorText;
+          orderData.keywords = keywords || undefined;
           orderData.specialInstructions = specialInstructions || undefined;
+          
+          // Convert files to base64 for storage
+          if (uploadedFiles.length > 0) {
+            const filePromises = uploadedFiles.map(file => {
+              return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => {
+                  resolve({
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    data: reader.result
+                  });
+                };
+                reader.readAsDataURL(file);
+              });
+            });
+            
+            const filesData = await Promise.all(filePromises);
+            orderData.uploadedDocuments = filesData;
+          }
         }
 
         const orderResponse = await apiClient.post("/orders", orderData);
@@ -225,16 +278,99 @@ function CheckoutForm({
                 The URL you want the guest post to link to
               </p>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="articleTopic">Article Topic (Optional)</Label>
-              <Input
-                id="articleTopic"
-                value={articleTopic}
-                onChange={(e) => setArticleTopic(e.target.value)}
-                placeholder="e.g., Best SEO Practices for 2025"
-                disabled={loading}
-              />
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="articleTitle">Article Title *</Label>
+                <Input
+                  id="articleTitle"
+                  value={articleTitle}
+                  onChange={(e) => setArticleTitle(e.target.value)}
+                  placeholder="e.g., 10 Best SEO Practices for 2025"
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="articleTopic">Article Topic/Category</Label>
+                <Input
+                  id="articleTopic"
+                  value={articleTopic}
+                  onChange={(e) => setArticleTopic(e.target.value)}
+                  placeholder="e.g., SEO, Marketing, Technology"
+                  disabled={loading}
+                />
+              </div>
             </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="anchorText">Anchor Text *</Label>
+                <Input
+                  id="anchorText"
+                  value={anchorText}
+                  onChange={(e) => setAnchorText(e.target.value)}
+                  placeholder="e.g., best SEO tools"
+                  required
+                  disabled={loading}
+                />
+                <p className="text-xs text-muted-foreground">
+                  The clickable text for your backlink
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="keywords">Target Keywords (Optional)</Label>
+                <Input
+                  id="keywords"
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  placeholder="SEO, link building, backlinks"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="fileUpload">Upload Documents (Optional)</Label>
+              <Input
+                id="fileUpload"
+                type="file"
+                multiple
+                accept=".doc,.docx,.pdf,.txt"
+                onChange={handleFileUpload}
+                disabled={loading}
+                className="cursor-pointer"
+              />
+              <p className="text-xs text-muted-foreground">
+                Upload article draft, guidelines, or reference materials (Max 5 files, 10MB each)
+              </p>
+              
+              {uploadedFiles.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  {uploadedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center justify-between p-2 bg-muted rounded-md">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <span className="text-sm truncate">{file.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          ({(file.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeFile(index)}
+                        disabled={loading}>
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="specialInstructions">
                 Special Instructions (Optional)
@@ -243,7 +379,7 @@ function CheckoutForm({
                 id="specialInstructions"
                 value={specialInstructions}
                 onChange={(e) => setSpecialInstructions(e.target.value)}
-                placeholder="Any specific requirements or preferences..."
+                placeholder="Any specific requirements, tone of voice, or preferences..."
                 rows={4}
                 disabled={loading}
               />
