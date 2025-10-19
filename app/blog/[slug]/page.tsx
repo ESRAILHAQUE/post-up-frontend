@@ -14,13 +14,29 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { Calendar, Clock, ArrowLeft, ArrowRight, Tag } from "lucide-react";
 import { useEffect, useState, use } from "react";
-import {
-  getBlogPostBySlug,
-  getRelatedBlogPosts,
-  type BlogPost,
-} from "@/lib/data/mock-data";
 import { useRouter } from "next/navigation";
 import Head from "next/head";
+import apiClient from "@/lib/api/client";
+
+interface BlogPost {
+  _id: string;
+  title: string;
+  slug: string;
+  content: string;
+  excerpt?: string;
+  featuredImage?: string;
+  author: string;
+  category: string;
+  tags: string[];
+  seoTitle?: string;
+  metaDescription?: string;
+  focusKeyword?: string;
+  isPublished: boolean;
+  publishedAt?: Date;
+  views: number;
+  createdAt: Date;
+  updatedAt: Date;
+}
 
 export default function BlogPostPage({
   params,
@@ -34,22 +50,52 @@ export default function BlogPostPage({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const blogPost = getBlogPostBySlug(slug);
+    fetchBlogPost();
+  }, [slug]);
 
-    if (!blogPost) {
+  const fetchBlogPost = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Fetch blog post by slug
+      const response = await apiClient.get(`/blog/slug/${slug}`);
+      console.log("[Blog Detail] API Response:", response.data);
+
+      if (response.data.success && response.data.data) {
+        const blogPost = response.data.data;
+        
+        // Check if published
+        if (!blogPost.isPublished) {
+          router.push("/blog");
+          return;
+        }
+
+        setPost(blogPost);
+
+        // Fetch related posts from same category
+        try {
+          const relatedResponse = await apiClient.get(
+            `/blog?category=${blogPost.category}&limit=3`
+          );
+          if (relatedResponse.data.data) {
+            const related = relatedResponse.data.data
+              .filter((p: BlogPost) => p._id !== blogPost._id)
+              .slice(0, 3);
+            setRelatedPosts(related);
+          }
+        } catch (relatedError) {
+          console.error("[Blog Detail] Error fetching related posts:", relatedError);
+        }
+      } else {
+        router.push("/blog");
+      }
+    } catch (error) {
+      console.error("[Blog Detail] Error fetching blog post:", error);
       router.push("/blog");
-      return;
+    } finally {
+      setIsLoading(false);
     }
-
-    if (blogPost.status !== "published") {
-      router.push("/blog");
-      return;
-    }
-
-    setPost(blogPost);
-    setRelatedPosts(getRelatedBlogPosts(blogPost.id, 3));
-    setIsLoading(false);
-  }, [slug, router]);
+  };
 
   const getExcerpt = (htmlContent: string, maxLength = 150) => {
     const text = htmlContent.replace(/<[^>]*>/g, "");
@@ -77,20 +123,20 @@ export default function BlogPostPage({
   return (
     <>
       <Head>
-        <title>{post.seo_title}</title>
-        <meta name="description" content={post.meta_description} />
-        <meta name="keywords" content={post.focus_keyword} />
-        <meta property="og:title" content={post.seo_title} />
-        <meta property="og:description" content={post.meta_description} />
-        {post.featured_image && (
-          <meta property="og:image" content={post.featured_image} />
+        <title>{post.seoTitle || post.title}</title>
+        <meta name="description" content={post.metaDescription || post.excerpt || ""} />
+        <meta name="keywords" content={post.focusKeyword || ""} />
+        <meta property="og:title" content={post.seoTitle || post.title} />
+        <meta property="og:description" content={post.metaDescription || post.excerpt || ""} />
+        {post.featuredImage && (
+          <meta property="og:image" content={post.featuredImage} />
         )}
         <meta property="og:type" content="article" />
         <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content={post.seo_title} />
-        <meta name="twitter:description" content={post.meta_description} />
-        {post.featured_image && (
-          <meta name="twitter:image" content={post.featured_image} />
+        <meta name="twitter:title" content={post.seoTitle || post.title} />
+        <meta name="twitter:description" content={post.metaDescription || post.excerpt || ""} />
+        {post.featuredImage && (
+          <meta name="twitter:image" content={post.featuredImage} />
         )}
       </Head>
 
@@ -124,17 +170,17 @@ export default function BlogPostPage({
                   <div className="flex items-center gap-2">
                     <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
                       <span className="text-emerald-700 font-semibold">
-                        {post.author_name?.charAt(0) || "A"}
+                        {post.author?.charAt(0) || "A"}
                       </span>
                     </div>
                     <span className="font-medium text-foreground">
-                      {post.author_name || "Admin"}
+                      {post.author || "Admin"}
                     </span>
                   </div>
                   <div className="flex items-center gap-1">
                     <Calendar className="h-4 w-4" />
                     <span>
-                      {new Date(post.publish_date).toLocaleDateString("en-US", {
+                      {new Date(post.publishedAt || post.createdAt).toLocaleDateString("en-US", {
                         year: "numeric",
                         month: "long",
                         day: "numeric",
@@ -143,16 +189,16 @@ export default function BlogPostPage({
                   </div>
                   <div className="flex items-center gap-1">
                     <Clock className="h-4 w-4" />
-                    <span>{post.read_time} min read</span>
+                    <span>{Math.ceil(post.content.split(" ").length / 200)} min read</span>
                   </div>
                 </div>
               </div>
 
               {/* Featured Image */}
-              {post.featured_image && (
+              {post.featuredImage && (
                 <div className="relative w-full h-[400px] rounded-xl overflow-hidden">
                   <img
-                    src={post.featured_image || "/placeholder.svg"}
+                    src={post.featuredImage || "/placeholder.svg"}
                     alt={post.title}
                     className="absolute inset-0 w-full h-full object-cover"
                   />
@@ -188,12 +234,12 @@ export default function BlogPostPage({
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 {relatedPosts.map((relatedPost) => (
                   <Card
-                    key={relatedPost.id}
+                    key={relatedPost._id}
                     className="flex flex-col hover:shadow-lg transition-shadow overflow-hidden">
                     <div className="relative h-48">
                       <img
                         src={
-                          relatedPost.featured_image ||
+                          relatedPost.featuredImage ||
                           "/placeholder.svg?height=300&width=400"
                         }
                         alt={relatedPost.title}
@@ -208,14 +254,14 @@ export default function BlogPostPage({
                         {relatedPost.title}
                       </CardTitle>
                       <CardDescription className="line-clamp-2">
-                        {getExcerpt(relatedPost.content)}
+                        {relatedPost.excerpt || getExcerpt(relatedPost.content)}
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="flex-1">
                       <div className="flex items-center gap-3 text-sm text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3" />
-                          <span>{relatedPost.read_time} min</span>
+                          <span>{Math.ceil(relatedPost.content.split(" ").length / 200)} min</span>
                         </div>
                       </div>
                     </CardContent>
