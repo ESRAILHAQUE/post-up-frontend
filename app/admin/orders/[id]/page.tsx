@@ -567,80 +567,51 @@ export default function AdminOrderEditPage({
               </Button>
             </div>
             <div className="p-4">
-              <div className="w-full h-[70vh] border rounded-lg overflow-hidden bg-gray-100">
-                <img
-                  src={`${previewPdf}?f_pdf`}
-                  alt="PDF Preview"
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    // Fallback: try with different parameters
-                    const target = e.target as HTMLImageElement;
-                    target.src = `${previewPdf}?f_pdf&q_auto`;
-                  }}
-                />
-              </div>
-              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-                <p className="text-sm text-blue-800">
-                  <strong>PDF Preview:</strong> Showing first page as image. For
-                  full document, use the buttons below.
-                </p>
-                <div className="flex gap-2 mt-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // Try multiple approaches for PDF viewing
-                      let pdfUrl = previewPdf;
-                      if (pdfUrl.includes("cloudinary.com")) {
-                        // Try with fl_attachment first
-                        const baseUrl = pdfUrl.split("?")[0];
-                        pdfUrl = `${baseUrl}?fl_attachment`;
-                      }
-
-                      // Open in new tab
-                      const newWindow = window.open(pdfUrl, "_blank");
-
-                      // If window fails to open, try direct download
-                      if (
-                        !newWindow ||
-                        newWindow.closed ||
-                        typeof newWindow.closed == "undefined"
-                      ) {
+              <div className="w-full h-[70vh] border rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                <div className="text-center p-8">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg
+                      className="w-8 h-8 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                    PDF Document
+                  </h3>
+                  <p className="text-gray-500 mb-4">
+                    Click the buttons below to view or download the PDF
+                  </p>
+                  <div className="flex gap-3 justify-center">
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open(previewPdf, "_blank")}
+                      className="flex items-center gap-2">
+                      <ExternalLink className="h-4 w-4" />
+                      Open PDF
+                    </Button>
+                    <Button
+                      onClick={() => {
                         const link = document.createElement("a");
-                        link.href = pdfUrl;
+                        link.href = previewPdf;
                         link.download = "document.pdf";
                         link.target = "_blank";
                         document.body.appendChild(link);
                         link.click();
                         document.body.removeChild(link);
-                      }
-                    }}>
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Open Original PDF
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      // Add authentication parameters to Cloudinary URL
-                      let downloadUrl = previewPdf;
-                      if (downloadUrl.includes("cloudinary.com")) {
-                        // Remove any existing parameters and add authentication
-                        const baseUrl = downloadUrl.split("?")[0];
-                        downloadUrl = `${baseUrl}?fl_attachment`;
-                      }
-
-                      const link = document.createElement("a");
-                      link.href = downloadUrl;
-                      link.download = "document.pdf";
-                      link.target = "_blank";
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                    }}>
-                    <Download className="h-4 w-4 mr-2" />
-                    Download PDF
-                  </Button>
+                      }}
+                      className="flex items-center gap-2">
+                      <Download className="h-4 w-4" />
+                      Download PDF
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
