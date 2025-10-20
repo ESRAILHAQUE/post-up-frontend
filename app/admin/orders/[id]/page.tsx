@@ -48,7 +48,7 @@ type Order = {
     domain_authority: number;
     monthly_traffic: number;
     turnaround_days: number;
-  };
+  } | null;
 };
 
 export default function AdminOrderEditPage({
@@ -66,6 +66,7 @@ export default function AdminOrderEditPage({
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [previewPdf, setPreviewPdf] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -219,41 +220,45 @@ export default function AdminOrderEditPage({
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Site Information</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <h3 className="font-semibold text-lg mb-1">
-                  {order.site.name}
-                </h3>
-                <div className="flex items-center gap-2 mb-3">
-                  <Badge variant="secondary">{order.site.category}</Badge>
-                  <Badge variant="outline">
-                    DA {order.site.domain_authority}
-                  </Badge>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="grid grid-cols-2 gap-4 text-sm">
+          {order.site && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Site Information</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
                 <div>
-                  <p className="text-muted-foreground mb-1">Monthly Traffic</p>
-                  <p className="font-semibold">
-                    {order.site.monthly_traffic.toLocaleString()}
-                  </p>
+                  <h3 className="font-semibold text-lg mb-1">
+                    {order.site.name}
+                  </h3>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Badge variant="secondary">{order.site.category}</Badge>
+                    <Badge variant="outline">
+                      DA {order.site.domain_authority}
+                    </Badge>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-muted-foreground mb-1">Turnaround</p>
-                  <p className="font-semibold">
-                    {order.site.turnaround_days} days
-                  </p>
+
+                <Separator />
+
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground mb-1">
+                      Monthly Traffic
+                    </p>
+                    <p className="font-semibold">
+                      {order.site.monthly_traffic.toLocaleString()}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground mb-1">Turnaround</p>
+                    <p className="font-semibold">
+                      {order.site.turnaround_days} days
+                    </p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
+          )}
 
           <Card>
             <CardHeader>
@@ -347,54 +352,97 @@ export default function AdminOrderEditPage({
                         </div>
                         <div className="flex items-center gap-2">
                           {isImage ? (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setPreviewImage(doc.url)}
-                              className="flex items-center gap-1">
-                              <Eye className="h-3 w-3" />
-                              Preview
-                            </Button>
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPreviewImage(doc.url)}
+                                className="flex items-center gap-1">
+                                <Eye className="h-3 w-3" />
+                                Preview
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Force download for images
+                                  let downloadUrl = doc.url;
+                                  if (doc.url.includes("cloudinary.com")) {
+                                    downloadUrl = doc.url.split("?")[0];
+                                    downloadUrl = downloadUrl.replace(
+                                      "/upload/",
+                                      "/upload/fl_attachment/"
+                                    );
+                                  }
+
+                                  const link = document.createElement("a");
+                                  link.href = downloadUrl;
+                                  link.download = doc.name;
+                                  link.target = "_blank";
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                }}
+                                className="flex items-center gap-1">
+                                <Download className="h-3 w-3" />
+                                Download
+                              </Button>
+                            </>
                           ) : (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                // For documents, open in new tab
-                                const downloadUrl = doc.url.includes(
-                                  "cloudinary.com"
-                                )
-                                  ? `${doc.url}?dl=1`
-                                  : doc.url;
-                                window.open(downloadUrl, "_blank");
-                              }}
-                              className="flex items-center gap-1">
-                              <ExternalLink className="h-3 w-3" />
-                              View
-                            </Button>
+                            <>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // For PDFs, show in modal
+                                  if (doc.type === "application/pdf") {
+                                    setPreviewPdf(doc.url);
+                                  } else {
+                                    // For other documents, open in new tab
+                                    let viewUrl = doc.url;
+                                    if (doc.url.includes("cloudinary.com")) {
+                                      viewUrl = doc.url.split("?")[0];
+                                    }
+                                    window.open(viewUrl, "_blank");
+                                  }
+                                }}
+                                className="flex items-center gap-1">
+                                <ExternalLink className="h-3 w-3" />
+                                View
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  // Force download for all files
+                                  let downloadUrl = doc.url;
+                                  if (doc.url.includes("cloudinary.com")) {
+                                    // Remove any existing parameters
+                                    downloadUrl = doc.url.split("?")[0];
+                                    // For PDFs, add fl_attachment flag to force download
+                                    if (doc.type === "application/pdf") {
+                                      downloadUrl = downloadUrl.replace(
+                                        "/upload/",
+                                        "/upload/fl_attachment/"
+                                      );
+                                    }
+                                  }
+
+                                  // Create a temporary link and trigger download
+                                  const link = document.createElement("a");
+                                  link.href = downloadUrl;
+                                  link.download = doc.name;
+                                  link.target = "_blank";
+                                  document.body.appendChild(link);
+                                  link.click();
+                                  document.body.removeChild(link);
+                                }}
+                                className="flex items-center gap-1">
+                                <Download className="h-3 w-3" />
+                                Download
+                              </Button>
+                            </>
                           )}
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => {
-                              // Force download for all files
-                              const downloadUrl = doc.url.includes(
-                                "cloudinary.com"
-                              )
-                                ? `${doc.url}?dl=1`
-                                : doc.url;
-                              const link = document.createElement("a");
-                              link.href = downloadUrl;
-                              link.download = doc.name;
-                              link.target = "_blank";
-                              document.body.appendChild(link);
-                              link.click();
-                              document.body.removeChild(link);
-                            }}
-                            className="flex items-center gap-1">
-                            <Download className="h-3 w-3" />
-                            Download
-                          </Button>
                         </div>
                       </div>
                     );
@@ -499,6 +547,105 @@ export default function AdminOrderEditPage({
                 Download
               </Button>
               <Button onClick={() => setPreviewImage(null)}>Close</Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* PDF Preview Modal */}
+      {previewPdf && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="relative max-w-6xl max-h-[90vh] bg-white rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">PDF Preview</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPreviewPdf(null)}
+                className="text-gray-500 hover:text-gray-700">
+                ✕
+              </Button>
+            </div>
+            <div className="p-4">
+              <div className="w-full h-[70vh] border rounded-lg overflow-hidden bg-gray-100">
+                <img
+                  src={`${previewPdf}?f_pdf`}
+                  alt="PDF Preview"
+                  className="w-full h-full object-contain"
+                  onError={(e) => {
+                    // Fallback: try with different parameters
+                    const target = e.target as HTMLImageElement;
+                    target.src = `${previewPdf}?f_pdf&q_auto`;
+                  }}
+                />
+              </div>
+              <div className="mt-4 p-3 bg-blue-50 rounded-lg">
+                <p className="text-sm text-blue-800">
+                  <strong>PDF Preview:</strong> Showing first page as image. For
+                  full document, use the buttons below.
+                </p>
+                <div className="flex gap-2 mt-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Try multiple approaches for PDF viewing
+                      let pdfUrl = previewPdf;
+                      if (pdfUrl.includes("cloudinary.com")) {
+                        // Try with fl_attachment first
+                        const baseUrl = pdfUrl.split("?")[0];
+                        pdfUrl = `${baseUrl}?fl_attachment`;
+                      }
+
+                      // Open in new tab
+                      const newWindow = window.open(pdfUrl, "_blank");
+
+                      // If window fails to open, try direct download
+                      if (
+                        !newWindow ||
+                        newWindow.closed ||
+                        typeof newWindow.closed == "undefined"
+                      ) {
+                        const link = document.createElement("a");
+                        link.href = pdfUrl;
+                        link.download = "document.pdf";
+                        link.target = "_blank";
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                      }
+                    }}>
+                    <ExternalLink className="h-4 w-4 mr-2" />
+                    Open Original PDF
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Add authentication parameters to Cloudinary URL
+                      let downloadUrl = previewPdf;
+                      if (downloadUrl.includes("cloudinary.com")) {
+                        // Remove any existing parameters and add authentication
+                        const baseUrl = downloadUrl.split("?")[0];
+                        downloadUrl = `${baseUrl}?fl_attachment`;
+                      }
+
+                      const link = document.createElement("a");
+                      link.href = downloadUrl;
+                      link.download = "document.pdf";
+                      link.target = "_blank";
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                    }}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                  </Button>
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t">
+              <Button onClick={() => setPreviewPdf(null)}>Close</Button>
             </div>
           </div>
         </div>
