@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import { format } from "date-fns";
-import { ArrowLeft, ExternalLink, Loader2 } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Eye, Download } from "lucide-react";
 
 type Order = {
   id: string;
@@ -65,6 +65,7 @@ export default function AdminOrderEditPage({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -345,23 +346,54 @@ export default function AdminOrderEditPage({
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" asChild>
-                            <a
-                              href={doc.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
+                          {isImage ? (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setPreviewImage(doc.url)}
+                              className="flex items-center gap-1">
+                              <Eye className="h-3 w-3" />
+                              Preview
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                // For documents, open in new tab
+                                const downloadUrl = doc.url.includes(
+                                  "cloudinary.com"
+                                )
+                                  ? `${doc.url}?dl=1`
+                                  : doc.url;
+                                window.open(downloadUrl, "_blank");
+                              }}
                               className="flex items-center gap-1">
                               <ExternalLink className="h-3 w-3" />
                               View
-                            </a>
-                          </Button>
-                          <Button variant="outline" size="sm" asChild>
-                            <a
-                              href={doc.url}
-                              download={doc.name}
-                              className="flex items-center gap-1">
-                              Download
-                            </a>
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              // Force download for all files
+                              const downloadUrl = doc.url.includes(
+                                "cloudinary.com"
+                              )
+                                ? `${doc.url}?dl=1`
+                                : doc.url;
+                              const link = document.createElement("a");
+                              link.href = downloadUrl;
+                              link.download = doc.name;
+                              link.target = "_blank";
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                            }}
+                            className="flex items-center gap-1">
+                            <Download className="h-3 w-3" />
+                            Download
                           </Button>
                         </div>
                       </div>
@@ -426,6 +458,51 @@ export default function AdminOrderEditPage({
           </Card>
         </div>
       </div>
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+          <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden">
+            <div className="flex items-center justify-between p-4 border-b">
+              <h3 className="text-lg font-semibold">Image Preview</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setPreviewImage(null)}
+                className="text-gray-500 hover:text-gray-700">
+                ✕
+              </Button>
+            </div>
+            <div className="p-4">
+              <img
+                src={previewImage}
+                alt="Preview"
+                className="max-w-full max-h-[70vh] object-contain mx-auto"
+                onError={(e) => {
+                  e.currentTarget.src = "/placeholder.svg";
+                }}
+              />
+            </div>
+            <div className="flex items-center justify-end gap-2 p-4 border-t">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const link = document.createElement("a");
+                  link.href = previewImage;
+                  link.download = "image";
+                  link.target = "_blank";
+                  document.body.appendChild(link);
+                  link.click();
+                  document.body.removeChild(link);
+                }}>
+                <Download className="h-4 w-4 mr-2" />
+                Download
+              </Button>
+              <Button onClick={() => setPreviewImage(null)}>Close</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
