@@ -30,6 +30,7 @@ import {
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/api/client";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 interface Site {
   id: string;
@@ -49,6 +50,9 @@ interface Site {
 export default function HomePage() {
   const [sites, setSites] = useState<Site[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
+    new Set()
+  );
 
   useEffect(() => {
     fetchFeaturedSites();
@@ -81,12 +85,34 @@ export default function HomePage() {
 
       console.log("[Homepage] Featured sites:", featuredSites.length);
       setSites(featuredSites);
-    } catch (error) {
+    } catch (error: any) {
       console.error("[Homepage] Error fetching featured sites:", error);
+
+      // Handle rate limiting error
+      if (error.response?.status === 429) {
+        console.warn("[Homepage] Rate limited, retrying in 5 seconds...");
+        setTimeout(() => {
+          fetchFeaturedSites();
+        }, 5000);
+        return;
+      }
+
       setSites([]);
     } finally {
       setLoading(false);
     }
+  }
+
+  function toggleDescription(siteId: string) {
+    setExpandedDescriptions((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(siteId)) {
+        newSet.delete(siteId);
+      } else {
+        newSet.add(siteId);
+      }
+      return newSet;
+    });
   }
 
   return (
@@ -265,19 +291,60 @@ export default function HomePage() {
                 </CardHeader>
 
                 <CardContent className="flex-1 pb-3">
-                  <div className="space-y-1.5 text-sm">
-                    <div className="flex items-center justify-between">
+                  <div className="space-y-3">
+                    {/* Traffic */}
+                    <div className="flex items-center justify-between text-sm">
                       <span className="text-slate-600">Traffic</span>
                       <span className="font-semibold text-slate-900">
                         {site.monthly_traffic.toLocaleString()}/mo
                       </span>
                     </div>
-                    <div className="flex items-center justify-between">
+
+                    {/* Delivery */}
+                    <div className="flex items-center justify-between text-sm">
                       <span className="text-slate-600">Delivery</span>
                       <span className="font-semibold text-slate-900">
                         {site.turnaround_days} days
                       </span>
                     </div>
+
+                    {/* Description with Read More */}
+                    {site.description && (
+                      <div className="space-y-2">
+                        <p className="text-xs font-semibold text-slate-700">
+                          Description:
+                        </p>
+                        <div className="text-xs text-slate-600">
+                          {expandedDescriptions.has(site.id) ? (
+                            <div className="space-y-2">
+                              <p className="whitespace-pre-wrap">
+                                {site.description}
+                              </p>
+                              <button
+                                onClick={() => toggleDescription(site.id)}
+                                className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium">
+                                <ChevronUp className="h-3 w-3" />
+                                Show Less
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              <p className="line-clamp-2">{site.description}</p>
+                              {site.description.length > 100 && (
+                                <button
+                                  onClick={() => toggleDescription(site.id)}
+                                  className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium">
+                                  <ChevronDown className="h-3 w-3" />
+                                  Read More
+                                </button>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Price */}
                     <div className="flex items-center justify-between pt-2 border-t border-slate-200">
                       <span className="text-slate-600">Price</span>
                       <span className="text-xl font-bold text-emerald-600">

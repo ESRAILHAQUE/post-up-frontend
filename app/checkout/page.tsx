@@ -441,19 +441,158 @@ function CheckoutForm({
         )}
 
         {itemType === "package" && (
-          <div className="space-y-2">
-            <Label htmlFor="specialInstructions">
-              Special Instructions (Optional)
-            </Label>
-            <Textarea
-              id="specialInstructions"
-              value={specialInstructions}
-              onChange={(e) => setSpecialInstructions(e.target.value)}
-              placeholder="Any specific requirements or preferences for your package order..."
-              rows={4}
-              disabled={loading}
-            />
-          </div>
+          <>
+            <div className="space-y-2">
+              <Label htmlFor="targetUrl">Target URL (for backlink) *</Label>
+              <Input
+                id="targetUrl"
+                type="url"
+                value={targetUrl}
+                onChange={(e) => setTargetUrl(e.target.value)}
+                placeholder="https://yourwebsite.com/page"
+                required
+                disabled={loading}
+              />
+              <p className="text-xs text-muted-foreground">
+                The URL you want the guest post to link to
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="articleTitle">Article Title *</Label>
+                <Input
+                  id="articleTitle"
+                  value={articleTitle}
+                  onChange={(e) => setArticleTitle(e.target.value)}
+                  placeholder="e.g., 10 Best SEO Practices for 2025"
+                  required
+                  disabled={loading}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="articleTopic">Article Topic/Category</Label>
+                <Input
+                  id="articleTopic"
+                  value={articleTopic}
+                  onChange={(e) => setArticleTopic(e.target.value)}
+                  placeholder="e.g., SEO, Marketing, Technology"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="anchorText">Anchor Text *</Label>
+                <Input
+                  id="anchorText"
+                  value={anchorText}
+                  onChange={(e) => setAnchorText(e.target.value)}
+                  placeholder="e.g., best SEO tools"
+                  required
+                  disabled={loading}
+                />
+                <p className="text-xs text-muted-foreground">
+                  The clickable text for your backlink
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="keywords">Target Keywords (Optional)</Label>
+                <Input
+                  id="keywords"
+                  value={keywords}
+                  onChange={(e) => setKeywords(e.target.value)}
+                  placeholder="SEO, link building, backlinks"
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="fileUpload">
+                Upload Files & Images (Optional)
+              </Label>
+              <Input
+                id="fileUpload"
+                type="file"
+                multiple
+                accept=".doc,.docx,.pdf,.txt,.png,.jpg,.jpeg,.gif,.webp,.svg,.zip,.rar"
+                onChange={handleFileUpload}
+                disabled={loading}
+                className="cursor-pointer"
+              />
+              <p className="text-xs text-muted-foreground">
+                Upload documents, images, or reference materials (Max 5 files,
+                10MB each)
+              </p>
+
+              {uploadedFiles.length > 0 && (
+                <div className="mt-2 space-y-2">
+                  {uploadedFiles.map((file, index) => {
+                    const isImage = file.type.startsWith("image/");
+                    const fileExtension = file.name
+                      .split(".")
+                      .pop()
+                      ?.toLowerCase();
+                    return (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-2 bg-muted rounded-md">
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          {isImage ? (
+                            <div className="w-6 h-6 bg-blue-100 rounded flex items-center justify-center">
+                              <span className="text-xs text-blue-600">📷</span>
+                            </div>
+                          ) : (
+                            <div className="w-6 h-6 bg-gray-100 rounded flex items-center justify-center">
+                              <span className="text-xs text-gray-600">
+                                {fileExtension === "pdf"
+                                  ? "📄"
+                                  : fileExtension === "doc" ||
+                                    fileExtension === "docx"
+                                  ? "📝"
+                                  : fileExtension === "zip" ||
+                                    fileExtension === "rar"
+                                  ? "📦"
+                                  : "📎"}
+                              </span>
+                            </div>
+                          )}
+                          <span className="text-sm truncate">{file.name}</span>
+                          <span className="text-xs text-muted-foreground">
+                            ({(file.size / 1024).toFixed(1)} KB)
+                          </span>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                          disabled={loading}>
+                          Remove
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="specialInstructions">
+                Special Instructions (Optional)
+              </Label>
+              <Textarea
+                id="specialInstructions"
+                value={specialInstructions}
+                onChange={(e) => setSpecialInstructions(e.target.value)}
+                placeholder="Any specific requirements, tone of voice, or preferences..."
+                rows={4}
+                disabled={loading}
+              />
+            </div>
+          </>
         )}
       </div>
 

@@ -18,7 +18,14 @@ import { Slider } from "@/components/ui/slider";
 import { Checkbox } from "@/components/ui/checkbox";
 import apiClient from "@/lib/api/client";
 import Link from "next/link";
-import { Search, X, Globe, RefreshCw } from "lucide-react";
+import {
+  Search,
+  X,
+  Globe,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+} from "lucide-react";
 import Image from "next/image";
 
 interface Site {
@@ -47,6 +54,9 @@ export default function MarketplacePage() {
   const [drRange, setDrRange] = useState([0, 100]);
   const [trafficRange, setTrafficRange] = useState([0, 500000000000]);
   const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
+    new Set()
+  );
 
   useEffect(() => {
     fetchSites();
@@ -93,8 +103,18 @@ export default function MarketplacePage() {
         }));
       setSites(activeSites);
       setFilteredSites(activeSites);
-    } catch (error) {
+    } catch (error: any) {
       console.error("[v0] Error fetching sites:", error);
+
+      // Handle rate limiting error
+      if (error.response?.status === 429) {
+        console.warn("[v0] Rate limited, retrying in 5 seconds...");
+        setTimeout(() => {
+          fetchSites(silent);
+        }, 5000);
+        return;
+      }
+
       setSites([]);
       setFilteredSites([]);
     } finally {
@@ -166,6 +186,18 @@ export default function MarketplacePage() {
     setDrRange([0, 100]);
     setTrafficRange([0, 500000000000]);
     setPriceRange([0, 5000]);
+  }
+
+  function toggleDescription(siteId: string) {
+    setExpandedDescriptions((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(siteId)) {
+        newSet.delete(siteId);
+      } else {
+        newSet.add(siteId);
+      }
+      return newSet;
+    });
   }
 
   const categories = Array.from(new Set(sites.map((site) => site.category)));
@@ -418,19 +450,64 @@ export default function MarketplacePage() {
                       </CardHeader>
 
                       <CardContent className="flex-1 pb-3">
-                        <div className="space-y-1.5 text-sm">
-                          <div className="flex items-center justify-between">
+                        <div className="space-y-3">
+                          {/* Traffic */}
+                          <div className="flex items-center justify-between text-sm">
                             <span className="text-slate-600">Traffic</span>
                             <span className="font-semibold text-slate-900">
                               {site.monthly_traffic.toLocaleString()}/mo
                             </span>
                           </div>
-                          <div className="flex items-center justify-between">
+
+                          {/* Delivery */}
+                          <div className="flex items-center justify-between text-sm">
                             <span className="text-slate-600">Delivery</span>
                             <span className="font-semibold text-slate-900">
                               {site.turnaround_days} days
                             </span>
                           </div>
+
+                          {/* Description with Read More */}
+                          {site.description && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold text-slate-700">
+                                Description:
+                              </p>
+                              <div className="text-xs text-slate-600">
+                                {expandedDescriptions.has(site.id) ? (
+                                  <div className="space-y-2">
+                                    <p className="whitespace-pre-wrap">
+                                      {site.description}
+                                    </p>
+                                    <button
+                                      onClick={() => toggleDescription(site.id)}
+                                      className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium">
+                                      <ChevronUp className="h-3 w-3" />
+                                      Show Less
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="space-y-2">
+                                    <p className="line-clamp-2">
+                                      {site.description}
+                                    </p>
+                                    {site.description.length > 100 && (
+                                      <button
+                                        onClick={() =>
+                                          toggleDescription(site.id)
+                                        }
+                                        className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium">
+                                        <ChevronDown className="h-3 w-3" />
+                                        Read More
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Price */}
                           <div className="flex items-center justify-between pt-2 border-t border-slate-200">
                             <span className="text-slate-600">Price</span>
                             <span className="text-xl font-bold text-emerald-600">
