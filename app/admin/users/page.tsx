@@ -30,6 +30,10 @@ export default function AdminUsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalUsers, setTotalUsers] = useState(0);
+  const [usersPerPage] = useState(12);
 
   useEffect(() => {
     if (!authLoading && (!user || user.role !== "admin")) {

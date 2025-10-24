@@ -79,17 +79,8 @@ export default function AdminPackagesPage() {
       console.log("[Admin Packages] API Response:", response.data);
       console.log("[Admin Packages] Packages data:", response.data.data);
 
-      // Fix: Check if response.data.data is an array
-      let packagesData = [];
-      if (response.data.data && Array.isArray(response.data.data)) {
-        packagesData = response.data.data;
-      } else if (
-        response.data.data &&
-        response.data.data.packages &&
-        Array.isArray(response.data.data.packages)
-      ) {
-        packagesData = response.data.data.packages;
-      }
+      // Handle the correct API response structure: response.data.data.packages
+      const packagesData = response.data.data?.packages || [];
 
       console.log("[Admin Packages] Packages to display:", packagesData);
       setPackages(packagesData);

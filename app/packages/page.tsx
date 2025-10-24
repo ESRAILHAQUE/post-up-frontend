@@ -48,18 +48,36 @@ export default function PackagesPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [priceRange, setPriceRange] = useState([0, 15000]);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
     new Set()
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [packagesPerPage] = useState(12);
+
+  // Get current page packages
+  const getCurrentPagePackages = () => {
+    const startIndex = (currentPage - 1) * packagesPerPage;
+    const endIndex = startIndex + packagesPerPage;
+    return filteredPackages.slice(startIndex, endIndex);
+  };
+
+  // Calculate total pages
+  const totalPages = Math.ceil(filteredPackages.length / packagesPerPage);
+
+  // Reset to page 1 when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCategories, priceRange]);
 
   useEffect(() => {
     fetchPackages();
-    const interval = setInterval(() => {
-      fetchPackages(true);
-    }, 5000);
+    // Remove auto-refresh to prevent infinite API calls
+    // const interval = setInterval(() => {
+    //   fetchPackages(true);
+    // }, 5000);
 
-    return () => clearInterval(interval);
+    // return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
@@ -76,10 +94,8 @@ export default function PackagesPage() {
       console.log("[Packages] API Response:", response.data);
       console.log("[Packages] Packages data:", response.data.data);
 
-      // Handle both response.data.data (array) and response.data.data.packages (object with packages array)
-      const packagesData = Array.isArray(response.data.data)
-        ? response.data.data
-        : response.data.data?.packages || [];
+      // Handle the correct API response structure: response.data.data.packages
+      const packagesData = response.data.data?.packages || [];
 
       const activePackages = packagesData
         .filter((pkg: any) => pkg.isActive)
@@ -96,6 +112,7 @@ export default function PackagesPage() {
         }));
 
       console.log("[Packages] Fetched packages:", activePackages.length);
+      console.log("[Packages] Active packages details:", activePackages);
       setPackages(activePackages);
       setFilteredPackages(activePackages);
     } catch (error: any) {
@@ -163,7 +180,7 @@ export default function PackagesPage() {
   function clearFilters() {
     setSearchQuery("");
     setSelectedCategories([]);
-    setPriceRange([0, 5000]);
+    setPriceRange([0, 15000]);
   }
 
   function toggleDescription(packageId: string) {
@@ -189,13 +206,13 @@ export default function PackagesPage() {
     <div className="flex flex-col min-h-screen bg-white">
       <SiteHeader />
 
-      <section className="py-12 border-b border-slate-200 bg-gradient-to-br from-slate-50 to-white">
-        <div className="container">
-          <div className="max-w-3xl mx-auto text-center space-y-4">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-balance text-slate-900">
+      <section className="py-8 md:py-12 border-b border-slate-200 bg-gradient-to-br from-slate-50 to-white">
+        <div className="container px-4">
+          <div className="max-w-3xl mx-auto text-center space-y-3 md:space-y-4">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-balance text-slate-900">
               Premium Packages
             </h1>
-            <p className="text-xl text-slate-600 leading-relaxed">
+            <p className="text-lg md:text-xl text-slate-600 leading-relaxed px-4">
               Choose from our curated packages designed to boost your content
               strategy and maximize your reach.
             </p>
@@ -203,11 +220,11 @@ export default function PackagesPage() {
         </div>
       </section>
 
-      <section className="py-8">
-        <div className="container">
-          <div className="flex flex-col lg:flex-row gap-8">
+      <section className="py-6 md:py-8">
+        <div className="container px-4">
+          <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
             <aside className="w-full lg:w-64 shrink-0">
-              <div className="sticky top-4 space-y-6">
+              <div className="lg:sticky lg:top-4 space-y-4 lg:space-y-6">
                 <Card className="bg-white border-slate-200 shadow-sm">
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -224,7 +241,7 @@ export default function PackagesPage() {
                       )}
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-6">
+                  <CardContent className="space-y-4 md:space-y-6">
                     <div className="space-y-2">
                       <Label className="text-slate-700">Search</Label>
                       <div className="relative">
@@ -269,7 +286,7 @@ export default function PackagesPage() {
                         value={priceRange}
                         onValueChange={setPriceRange}
                         min={0}
-                        max={5000}
+                        max={15000}
                         step={100}
                         className="[&_[role=slider]]:bg-emerald-600 [&_[role=slider]]:border-emerald-600"
                       />
@@ -280,8 +297,8 @@ export default function PackagesPage() {
             </aside>
 
             <div className="flex-1">
-              <div className="flex items-center justify-between mb-6">
-                <p className="text-slate-600">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+                <p className="text-sm md:text-base text-slate-600">
                   Showing{" "}
                   <span className="font-semibold text-slate-900">
                     {filteredPackages.length}
@@ -297,7 +314,7 @@ export default function PackagesPage() {
                   size="sm"
                   onClick={handleRefresh}
                   disabled={refreshing}
-                  className="gap-2 bg-transparent">
+                  className="gap-2 bg-transparent w-full sm:w-auto">
                   <RefreshCw
                     className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
                   />
@@ -322,8 +339,8 @@ export default function PackagesPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {filteredPackages.map((pkg) => {
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+                  {getCurrentPagePackages().map((pkg) => {
                     const discountPercentage = Math.round(
                       ((pkg.price - pkg.discounted_price) / pkg.price) * 100
                     );
@@ -331,29 +348,29 @@ export default function PackagesPage() {
                     return (
                       <Card
                         key={pkg._id}
-                        className="flex flex-col hover:shadow-lg transition-all bg-white border-slate-200 hover:border-emerald-500">
-                        <CardHeader className="pb-4">
-                          <div className="flex items-start gap-4 mb-3">
+                        className="flex flex-col hover:shadow-lg transition-all bg-white border-slate-200 hover:border-emerald-500 h-full">
+                        <CardHeader className="pb-3 md:pb-4">
+                          <div className="flex items-start gap-3 md:gap-4 mb-3">
                             <div className="shrink-0">
                               {pkg.imageUrl ? (
-                                <div className="relative w-12 h-12 rounded-full overflow-hidden border border-slate-200 bg-white">
+                                <div className="relative w-10 h-10 md:w-12 md:h-12 rounded-full overflow-hidden border border-slate-200 bg-white">
                                   <Image
                                     src={pkg.imageUrl || "/placeholder.svg"}
                                     alt={`${pkg.name} logo`}
                                     fill
                                     className="object-cover"
-                                    sizes="48px"
+                                    sizes="(max-width: 768px) 40px, 48px"
                                   />
                                 </div>
                               ) : (
-                                <div className="w-12 h-12 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center">
-                                  <Package className="h-6 w-6 text-emerald-600" />
+                                <div className="w-10 h-10 md:w-12 md:h-12 rounded-full bg-emerald-100 border border-emerald-200 flex items-center justify-center">
+                                  <Package className="h-5 w-5 md:h-6 md:w-6 text-emerald-600" />
                                 </div>
                               )}
                             </div>
 
                             <div className="flex-1 min-w-0">
-                              <h3 className="font-semibold text-slate-900 text-base leading-tight mb-1 truncate">
+                              <h3 className="font-semibold text-slate-900 text-sm md:text-base leading-tight mb-1 line-clamp-2">
                                 {pkg.name}
                               </h3>
                               <p className="text-xs text-slate-500 line-clamp-2">
@@ -362,10 +379,10 @@ export default function PackagesPage() {
                             </div>
                           </div>
 
-                          <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center justify-between gap-2 flex-wrap">
                             <Badge
                               variant="secondary"
-                              className="bg-emerald-50 text-emerald-700 border-emerald-200">
+                              className="bg-emerald-50 text-emerald-700 border-emerald-200 text-xs">
                               {pkg.category}
                             </Badge>
                             <Badge
@@ -377,7 +394,7 @@ export default function PackagesPage() {
                         </CardHeader>
 
                         <CardContent className="flex-1 pb-3">
-                          <div className="space-y-3">
+                          <div className="space-y-2 md:space-y-3">
                             <div>
                               <p className="text-xs font-semibold text-slate-700 mb-2">
                                 Features:
@@ -389,32 +406,32 @@ export default function PackagesPage() {
                                     <li
                                       key={index}
                                       className="text-xs text-slate-600 flex items-start gap-1.5">
-                                      <Check className="h-3.5 w-3.5 text-emerald-600 mt-0.5 shrink-0" />
+                                      <Check className="h-3 w-3 md:h-3.5 md:w-3.5 text-emerald-600 mt-0.5 shrink-0" />
                                       <span className="line-clamp-1">
                                         {feature}
                                       </span>
                                     </li>
                                   ))}
                                 {pkg.features.length > 3 && (
-                                  <li className="text-xs text-slate-500 pl-5">
+                                  <li className="text-xs text-slate-500 pl-4 md:pl-5">
                                     +{pkg.features.length - 3} more features
                                   </li>
                                 )}
                               </ul>
                             </div>
 
-                            <div className="pt-3 border-t border-slate-200">
-                              <div className="flex items-center justify-between text-sm">
+                            <div className="pt-2 md:pt-3 border-t border-slate-200">
+                              <div className="flex items-center justify-between text-xs md:text-sm">
                                 <span className="text-slate-600">Original</span>
                                 <span className="line-through text-slate-400">
                                   ${pkg.price}
                                 </span>
                               </div>
                               <div className="flex items-center justify-between pt-1">
-                                <span className="text-slate-600 text-sm">
+                                <span className="text-slate-600 text-xs md:text-sm">
                                   Price
                                 </span>
-                                <span className="text-xl font-bold text-emerald-600">
+                                <span className="text-lg md:text-xl font-bold text-emerald-600">
                                   ${pkg.discounted_price}
                                 </span>
                               </div>
@@ -422,9 +439,9 @@ export default function PackagesPage() {
                           </div>
                         </CardContent>
 
-                        <CardFooter className="pt-3">
+                        <CardFooter className="pt-2 md:pt-3">
                           <Button
-                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm md:text-base"
                             asChild>
                             <Link href={`/checkout?package=${pkg._id}`}>
                               Buy Now
@@ -434,6 +451,70 @@ export default function PackagesPage() {
                       </Card>
                     );
                   })}
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-8 px-4">
+                  <div className="text-sm text-gray-700">
+                    Showing {(currentPage - 1) * packagesPerPage + 1} to{" "}
+                    {Math.min(
+                      currentPage * packagesPerPage,
+                      filteredPackages.length
+                    )}{" "}
+                    of {filteredPackages.length} packages
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}>
+                      Previous
+                    </Button>
+                    <div className="flex items-center space-x-1">
+                      {Array.from(
+                        { length: Math.min(5, totalPages) },
+                        (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={
+                                currentPage === pageNum ? "default" : "outline"
+                              }
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={
+                                currentPage === pageNum
+                                  ? "bg-emerald-600 hover:bg-emerald-700"
+                                  : ""
+                              }>
+                              {pageNum}
+                            </Button>
+                          );
+                        }
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}>
+                      Next
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

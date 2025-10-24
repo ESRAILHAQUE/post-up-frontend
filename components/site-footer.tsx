@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Linkedin, Facebook, Twitter } from "lucide-react";
+import Image from "next/image";
 
 export function SiteFooter() {
   return (
@@ -7,11 +8,19 @@ export function SiteFooter() {
       <div className="container py-12">
         <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
           <div className="space-y-3">
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500">
-                <span className="text-lg font-bold text-white">P</span>
+            <div className="flex items-center space-x-4">
+              <div className="relative w-20 h-20">
+                <Image
+                  src="/logo/logo.png"
+                  alt="GUEST POST UP Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
               </div>
-              <span className="text-xl font-bold text-white">PostUp</span>
+              <span className="text-2xl font-bold text-white">
+                GUEST POST UP
+              </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
               Premium guest posting service connecting you with high-authority
@@ -121,7 +130,10 @@ export function SiteFooter() {
         </div>
 
         <div className="mt-8 pt-8 border-t border-emerald-900/20 text-center text-sm text-slate-400">
-          <p>&copy; {new Date().getFullYear()} PostUp. All rights reserved.</p>
+          <p>
+            &copy; {new Date().getFullYear()} GUEST POST UP. All rights
+            reserved.
+          </p>
         </div>
       </div>
     </footer>

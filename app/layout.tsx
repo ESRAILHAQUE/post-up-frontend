@@ -2,7 +2,7 @@ import type React from "react";
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/lib/auth/auth-context";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
   title: "PostUp - Premium Guest Posts on High Authority Sites",

@@ -37,7 +37,7 @@ interface Site {
   monthly_traffic: number;
   price: number;
   category: string;
-  description: string;
+  publishedExampleUrl: string;
   turnaround_days: number;
   is_active: boolean;
   image_url: string | null;
@@ -57,20 +57,32 @@ export default function MarketplacePage() {
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
     new Set()
   );
+  const [currentPage, setCurrentPage] = useState(1);
+  const [sitesPerPage] = useState(12);
 
+  // Get current page sites (backend handles pagination)
+  const getCurrentPageSites = () => {
+    return sites; // Backend already returns the current page sites
+  };
+
+  // Calculate total pages from backend response
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalSites, setTotalSites] = useState(0);
+
+  // Format traffic numbers (5K, 1M format)
+  const formatTraffic = (num: number) => {
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + "M";
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + "K";
+    }
+    return num.toString();
+  };
+
+  // Reset to page 1 when filters change
   useEffect(() => {
-    fetchSites();
-    const interval = setInterval(() => {
-      fetchSites(true);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
-
-  useEffect(() => {
-    filterSites();
+    setCurrentPage(1);
   }, [
-    sites,
     searchQuery,
     selectedCategories,
     daRange,
@@ -79,30 +91,98 @@ export default function MarketplacePage() {
     priceRange,
   ]);
 
+  // Fetch sites when page changes
+  useEffect(() => {
+    if (currentPage > 1) {
+      fetchSites();
+    }
+  }, [currentPage]);
+
+  // Fetch sites when filters change
+  useEffect(() => {
+    fetchSites();
+  }, [searchQuery, selectedCategories, daRange, priceRange]);
+
+  useEffect(() => {
+    fetchSites();
+    // Remove auto-refresh to prevent infinite API calls
+    // const interval = setInterval(() => {
+    //   fetchSites(true);
+    // }, 5000);
+
+    // return () => clearInterval(interval);
+  }, []);
+
+  // Remove frontend filtering since backend handles pagination
+  // useEffect(() => {
+  //   filterSites();
+  // }, [
+  //   sites,
+  //   searchQuery,
+  //   selectedCategories,
+  //   daRange,
+  //   drRange,
+  //   trafficRange,
+  //   priceRange,
+  // ]);
+
   async function fetchSites(silent = false) {
     if (!silent) {
       setLoading(true);
     }
     try {
-      const response = await apiClient.get("/sites");
-      const activeSites = (response.data.data || [])
-        .filter((site: any) => site.isActive)
-        .map((site: any) => ({
-          id: site._id,
-          name: site.name,
-          url: site.url,
-          domain_authority: site.domainAuthority,
-          domain_rating: site.domainRating,
-          monthly_traffic: site.monthlyTraffic,
-          price: site.price,
-          category: site.category,
-          description: site.description,
-          turnaround_days: site.turnaroundDays,
-          is_active: site.isActive,
-          image_url: site.imageUrl || site.logoUrl || null,
-        }));
-      setSites(activeSites);
-      setFilteredSites(activeSites);
+      // Build query parameters
+      const params = new URLSearchParams({
+        page: currentPage.toString(),
+        limit: sitesPerPage.toString(),
+        isActive: "true",
+      });
+
+      // Add search query
+      if (searchQuery) {
+        params.append("search", searchQuery);
+      }
+
+      // Add category filters
+      if (selectedCategories.length > 0) {
+        params.append("category", selectedCategories.join(","));
+      }
+
+      // Add DA range
+      if (daRange[0] > 0 || daRange[1] < 100) {
+        params.append("minDA", daRange[0].toString());
+        params.append("maxDA", daRange[1].toString());
+      }
+
+      // Add price range
+      if (priceRange[0] > 0 || priceRange[1] < 5000) {
+        params.append("maxPrice", priceRange[1].toString());
+      }
+
+      const response = await apiClient.get(`/sites?${params.toString()}`);
+      const sitesData = (response.data.data || []).map((site: any) => ({
+        id: site._id,
+        name: site.name,
+        url: site.url,
+        domain_authority: site.domainAuthority,
+        domain_rating: site.domainRating,
+        monthly_traffic: site.monthlyTraffic,
+        price: site.price,
+        category: site.category,
+        publishedExampleUrl: site.publishedExampleUrl || site.description,
+        turnaround_days: site.turnaroundDays,
+        is_active: site.isActive,
+        image_url: site.imageUrl || site.logoUrl || null,
+      }));
+
+      // Update pagination info from backend response
+      if (response.data.pagination) {
+        setTotalPages(response.data.pagination.pages);
+        setTotalSites(response.data.pagination.total);
+      }
+
+      setSites(sitesData);
+      setFilteredSites(sitesData);
     } catch (error: any) {
       console.error("[v0] Error fetching sites:", error);
 
@@ -355,7 +435,7 @@ export default function MarketplacePage() {
                 <p className="text-slate-600">
                   Showing{" "}
                   <span className="font-semibold text-slate-900">
-                    {filteredSites.length}
+                    {sites.length}
                   </span>{" "}
                   of{" "}
                   <span className="font-semibold text-slate-900">
@@ -380,7 +460,7 @@ export default function MarketplacePage() {
                 <div className="text-center py-12">
                   <p className="text-slate-500">Loading sites...</p>
                 </div>
-              ) : filteredSites.length === 0 ? (
+              ) : sites.length === 0 ? (
                 <div className="text-center py-12">
                   <p className="text-slate-500">
                     No sites found matching your filters.
@@ -394,7 +474,7 @@ export default function MarketplacePage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-                  {filteredSites.map((site) => (
+                  {getCurrentPageSites().map((site) => (
                     <Card
                       key={site.id}
                       className="flex flex-col hover:shadow-lg transition-all bg-white border-slate-200 hover:border-emerald-500">
@@ -422,7 +502,7 @@ export default function MarketplacePage() {
                             <h3 className="font-semibold text-slate-900 text-base leading-tight mb-1 truncate">
                               {site.name}
                             </h3>
-                            <p className="text-xs text-slate-500 truncate">
+                            <p className="text-xs text-slate-500 break-all overflow-hidden">
                               {site.url}
                             </p>
                           </div>
@@ -455,7 +535,7 @@ export default function MarketplacePage() {
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-slate-600">Traffic</span>
                             <span className="font-semibold text-slate-900">
-                              {site.monthly_traffic.toLocaleString()}/mo
+                              {formatTraffic(site.monthly_traffic)}/mo
                             </span>
                           </div>
 
@@ -467,42 +547,20 @@ export default function MarketplacePage() {
                             </span>
                           </div>
 
-                          {/* Description with Read More */}
-                          {site.description && (
+                          {/* Published Example Link */}
+                          {site.publishedExampleUrl && (
                             <div className="space-y-2">
                               <p className="text-xs font-semibold text-slate-700">
-                                Description:
+                                Published Example:
                               </p>
                               <div className="text-xs text-slate-600">
-                                {expandedDescriptions.has(site.id) ? (
-                                  <div className="space-y-2">
-                                    <p className="whitespace-pre-wrap">
-                                      {site.description}
-                                    </p>
-                                    <button
-                                      onClick={() => toggleDescription(site.id)}
-                                      className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium">
-                                      <ChevronUp className="h-3 w-3" />
-                                      Show Less
-                                    </button>
-                                  </div>
-                                ) : (
-                                  <div className="space-y-2">
-                                    <p className="line-clamp-2">
-                                      {site.description}
-                                    </p>
-                                    {site.description.length > 100 && (
-                                      <button
-                                        onClick={() =>
-                                          toggleDescription(site.id)
-                                        }
-                                        className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium">
-                                        <ChevronDown className="h-3 w-3" />
-                                        Read More
-                                      </button>
-                                    )}
-                                  </div>
-                                )}
+                                <a
+                                  href={site.publishedExampleUrl}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-emerald-600 hover:text-emerald-700 underline break-all">
+                                  {site.publishedExampleUrl}
+                                </a>
                               </div>
                             </div>
                           )}
@@ -528,6 +586,67 @@ export default function MarketplacePage() {
                       </CardFooter>
                     </Card>
                   ))}
+                </div>
+              )}
+
+              {/* Pagination Controls */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between mt-8 px-4">
+                  <div className="text-sm text-gray-700">
+                    Showing {(currentPage - 1) * sitesPerPage + 1} to{" "}
+                    {Math.min(currentPage * sitesPerPage, totalSites)} of{" "}
+                    {totalSites} sites
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage - 1)}
+                      disabled={currentPage === 1}>
+                      Previous
+                    </Button>
+                    <div className="flex items-center space-x-1">
+                      {Array.from(
+                        { length: Math.min(5, totalPages) },
+                        (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={
+                                currentPage === pageNum ? "default" : "outline"
+                              }
+                              size="sm"
+                              onClick={() => setCurrentPage(pageNum)}
+                              className={
+                                currentPage === pageNum
+                                  ? "bg-emerald-600 hover:bg-emerald-700"
+                                  : ""
+                              }>
+                              {pageNum}
+                            </Button>
+                          );
+                        }
+                      )}
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCurrentPage(currentPage + 1)}
+                      disabled={currentPage === totalPages}>
+                      Next
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

@@ -43,7 +43,7 @@ export default function EditSitePage() {
     monthly_traffic: "",
     price: "",
     category: "",
-    description: "",
+    publishedExampleUrl: "",
     turnaround_days: "7",
     image_url: "",
     is_active: true,
@@ -92,7 +92,7 @@ export default function EditSitePage() {
         ).toString(),
         price: site.price.toString(),
         category: site.category,
-        description: site.description || "",
+        publishedExampleUrl: site.publishedExampleUrl || site.description || "",
         turnaround_days: (
           site.turnaroundDays ||
           site.turnaround_days ||
@@ -125,7 +125,7 @@ export default function EditSitePage() {
         monthlyTraffic: Number.parseInt(formData.monthly_traffic),
         price: Number.parseFloat(formData.price),
         category: formData.category,
-        description: formData.description,
+        publishedExampleUrl: formData.publishedExampleUrl,
         turnaroundDays: Number.parseInt(formData.turnaround_days),
         logoUrl: formData.image_url || null,
         isActive: formData.is_active,
@@ -260,6 +260,28 @@ export default function EditSitePage() {
                       <SelectItem value="Lifestyle">Lifestyle</SelectItem>
                       <SelectItem value="Travel">Travel</SelectItem>
                       <SelectItem value="Education">Education</SelectItem>
+                      <SelectItem value="Automotive">Automotive</SelectItem>
+                      <SelectItem value="Cryptocurrency">
+                        Cryptocurrency
+                      </SelectItem>
+                      <SelectItem value="Fashion & Beauty">
+                        Fashion & Beauty
+                      </SelectItem>
+                      <SelectItem value="Financial">Financial</SelectItem>
+                      <SelectItem value="Food & Cuisine">
+                        Food & Cuisine
+                      </SelectItem>
+                      <SelectItem value="Gambling & Betting">
+                        Gambling & Betting
+                      </SelectItem>
+                      <SelectItem value="General News">General News</SelectItem>
+                      <SelectItem value="Gaming">Gaming</SelectItem>
+                      <SelectItem value="Health & Medicine">
+                        Health & Medicine
+                      </SelectItem>
+                      <SelectItem value="Real Estate">Real Estate</SelectItem>
+                      <SelectItem value="Sports">Sports</SelectItem>
+                      <SelectItem value="Trading">Trading</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -283,7 +305,7 @@ export default function EditSitePage() {
                   </Label>
                   <Input
                     id="domain_authority"
-                    type="number"
+                    type="text"
                     required
                     min="0"
                     max="100"
@@ -302,7 +324,7 @@ export default function EditSitePage() {
                   <Label htmlFor="domain_rating">Domain Rating (DR)</Label>
                   <Input
                     id="domain_rating"
-                    type="number"
+                    type="text"
                     min="0"
                     max="100"
                     value={formData.domain_rating}
@@ -320,7 +342,7 @@ export default function EditSitePage() {
                   <Label htmlFor="monthly_traffic">Monthly Traffic *</Label>
                   <Input
                     id="monthly_traffic"
-                    type="number"
+                    type="text"
                     required
                     min="0"
                     value={formData.monthly_traffic}
@@ -338,7 +360,7 @@ export default function EditSitePage() {
                   <Label htmlFor="price">Price (USD) *</Label>
                   <Input
                     id="price"
-                    type="number"
+                    type="text"
                     required
                     min="0"
                     step="0.01"
@@ -354,7 +376,7 @@ export default function EditSitePage() {
                   <Label htmlFor="turnaround_days">Turnaround Days *</Label>
                   <Input
                     id="turnaround_days"
-                    type="number"
+                    type="text"
                     required
                     min="1"
                     value={formData.turnaround_days}
@@ -370,15 +392,18 @@ export default function EditSitePage() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
-                <Textarea
-                  id="description"
-                  value={formData.description}
+                <Label htmlFor="publishedExampleUrl">Published Example</Label>
+                <Input
+                  id="publishedExampleUrl"
+                  type="url"
+                  value={formData.publishedExampleUrl}
                   onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
+                    setFormData({
+                      ...formData,
+                      publishedExampleUrl: e.target.value,
+                    })
                   }
-                  placeholder="Brief description of the website and its audience..."
-                  rows={4}
+                  placeholder="https://finance.yahoo.com/news/prnews-io-..."
                 />
               </div>
 

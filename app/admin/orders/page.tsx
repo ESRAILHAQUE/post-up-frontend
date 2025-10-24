@@ -31,6 +31,10 @@ export default function AdminOrdersPage() {
   const router = useRouter();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalOrders, setTotalOrders] = useState(0);
+  const [ordersPerPage] = useState(12);
 
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "admin")) {
@@ -40,14 +44,24 @@ export default function AdminOrdersPage() {
     }
   }, [user, isLoading, router]);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (page = currentPage) => {
     try {
       setLoading(true);
-      const response = await apiClient.get("/orders");
+      const response = await apiClient.get(`/orders?page=${page}&limit=${ordersPerPage}`);
       console.log("[Admin Orders] API Response:", response.data);
+      
       const ordersData = response.data.data || [];
+      const total = response.data.pagination?.total || response.data.total || ordersData.length;
+      const totalPagesCount = response.data.pagination?.pages || Math.ceil(total / ordersPerPage);
+      
       console.log("[Admin Orders] Orders count:", ordersData.length);
+      console.log("[Admin Orders] Total orders:", total);
+      console.log("[Admin Orders] Total pages:", totalPagesCount);
+      
       setOrders(ordersData);
+      setTotalOrders(total);
+      setTotalPages(totalPagesCount);
+      setCurrentPage(page);
     } catch (error) {
       console.error("Error fetching orders:", error);
       setOrders([]);
@@ -194,6 +208,60 @@ export default function AdminOrdersPage() {
               </div>
             )}
           </CardContent>
+          
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+              <div className="text-sm text-gray-700">
+                Showing {(currentPage - 1) * ordersPerPage + 1} to{" "}
+                {Math.min(currentPage * ordersPerPage, totalOrders)} of{" "}
+                {totalOrders} orders
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchOrders(currentPage - 1)}
+                  disabled={currentPage === 1 || loading}>
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+                    
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={currentPage === pageNum ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => fetchOrders(pageNum)}
+                        disabled={loading}
+                        className={currentPage === pageNum ? "bg-emerald-600 hover:bg-emerald-700" : ""}
+                      >
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchOrders(currentPage + 1)}
+                  disabled={currentPage === totalPages || loading}>
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     </AdminLayout>

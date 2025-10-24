@@ -32,27 +32,56 @@ export default function AdminSitesPage() {
   const [sites, setSites] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalSites, setTotalSites] = useState(0);
+  const [sitesPerPage] = useState(12);
 
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "admin")) {
       router.push("/admin/login");
     } else if (!isLoading && user && user.role === "admin") {
-      fetchSites();
+      fetchSites(1);
     }
   }, [user, isLoading, router]);
 
-  const fetchSites = async () => {
+  // Refresh sites when page becomes visible (e.g., when navigating back from new site page)
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (!document.hidden && user && user.role === "admin") {
+        fetchSites(1);
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [user]);
+
+  const fetchSites = async (page = currentPage) => {
     try {
       setLoading(true);
-      const response = await apiClient.get("/sites");
+      const response = await apiClient.get(
+        `/sites?page=${page}&limit=${sitesPerPage}`
+      );
       console.log("[Admin Sites] API Response:", response.data);
-      console.log("[Admin Sites] Sites data:", response.data.data);
-      console.log("[Admin Sites] Data array:", response.data.data?.data);
 
-      // Fix: Use response.data.data directly (not response.data.data.data)
       const sitesData = response.data.data || [];
+      const total =
+        response.data.pagination?.total ||
+        response.data.total ||
+        sitesData.length;
+      const totalPagesCount =
+        response.data.pagination?.pages || Math.ceil(total / sitesPerPage);
+
       console.log("[Admin Sites] Sites to display:", sitesData);
+      console.log("[Admin Sites] Total sites:", total);
+      console.log("[Admin Sites] Total pages:", totalPagesCount);
+
       setSites(sitesData);
+      setTotalSites(total);
+      setTotalPages(totalPagesCount);
+      setCurrentPage(page);
     } catch (error) {
       console.error("Error fetching sites:", error);
     } finally {
@@ -74,7 +103,7 @@ export default function AdminSitesPage() {
     try {
       await apiClient.delete(`/sites/${id}`);
       toast.success("Site deleted successfully!");
-      fetchSites();
+      fetchSites(currentPage);
     } catch (error: any) {
       console.error("Error deleting site:", error);
       toast.error(error.message || "Failed to delete site");
@@ -99,9 +128,17 @@ export default function AdminSitesPage() {
               Add and manage guest post opportunities
             </p>
           </div>
-          <Button className="bg-emerald-600 hover:bg-emerald-700" asChild>
-            <Link href="/admin/sites/new">Add New Site</Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              onClick={() => fetchSites(1)}
+              disabled={loading}>
+              {loading ? "Loading..." : "Refresh"}
+            </Button>
+            <Button className="bg-emerald-600 hover:bg-emerald-700" asChild>
+              <Link href="/admin/sites/new">Add New Site</Link>
+            </Button>
+          </div>
         </div>
 
         <Card className="border-2 shadow-sm">
@@ -198,6 +235,65 @@ export default function AdminSitesPage() {
               </div>
             )}
           </CardContent>
+
+          {/* Pagination Controls */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
+              <div className="text-sm text-gray-700">
+                Showing {(currentPage - 1) * sitesPerPage + 1} to{" "}
+                {Math.min(currentPage * sitesPerPage, totalSites)} of{" "}
+                {totalSites} sites
+              </div>
+              <div className="flex items-center space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchSites(currentPage - 1)}
+                  disabled={currentPage === 1 || loading}>
+                  Previous
+                </Button>
+                <div className="flex items-center space-x-1">
+                  {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                    let pageNum;
+                    if (totalPages <= 5) {
+                      pageNum = i + 1;
+                    } else if (currentPage <= 3) {
+                      pageNum = i + 1;
+                    } else if (currentPage >= totalPages - 2) {
+                      pageNum = totalPages - 4 + i;
+                    } else {
+                      pageNum = currentPage - 2 + i;
+                    }
+
+                    return (
+                      <Button
+                        key={pageNum}
+                        variant={
+                          currentPage === pageNum ? "default" : "outline"
+                        }
+                        size="sm"
+                        onClick={() => fetchSites(pageNum)}
+                        disabled={loading}
+                        className={
+                          currentPage === pageNum
+                            ? "bg-emerald-600 hover:bg-emerald-700"
+                            : ""
+                        }>
+                        {pageNum}
+                      </Button>
+                    );
+                  })}
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fetchSites(currentPage + 1)}
+                  disabled={currentPage === totalPages || loading}>
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
     </AdminLayout>
