@@ -58,7 +58,7 @@ export default function NewSitePage() {
         domainRating: formData.domain_rating
           ? Number.parseInt(formData.domain_rating)
           : 0,
-        monthlyTraffic: Number.parseInt(formData.monthly_traffic),
+        monthlyTraffic: formData.monthly_traffic, // Store as string (e.g., "4.5M")
         price: Number.parseFloat(formData.price),
         category: formData.category,
         publishedExampleUrl: formData.publishedExampleUrl,

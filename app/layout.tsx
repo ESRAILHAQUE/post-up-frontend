@@ -17,7 +17,11 @@ export const metadata: Metadata = {
         sizes: "192x192",
         type: "image/jpeg",
       },
-      { url: "/logo/url-icon/url-icon.jpg", sizes: "32x32", type: "image/jpeg" },
+      {
+        url: "/logo/url-icon/url-icon.jpg",
+        sizes: "32x32",
+        type: "image/jpeg",
+      },
       {
         url: "/logo/url-icon/url-icon.jpg",
         sizes: "512x512",

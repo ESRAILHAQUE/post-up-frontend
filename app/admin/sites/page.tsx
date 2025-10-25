@@ -199,9 +199,7 @@ export default function AdminSitesPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-sm text-gray-700">
-                        {(
-                          site.monthlyTraffic || site.monthly_traffic
-                        )?.toLocaleString() || "N/A"}
+                        {site.monthlyTraffic || site.monthly_traffic || "N/A"}
                       </TableCell>
                       <TableCell className="font-medium text-gray-900">
                         ${site.price}

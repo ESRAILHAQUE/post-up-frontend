@@ -34,7 +34,7 @@ interface Site {
   url: string;
   domain_authority: number;
   domain_rating: number;
-  monthly_traffic: number;
+  monthly_traffic: string; // Now stored as string (e.g., "4.5M")
   price: number;
   category: string;
   publishedExampleUrl: string;
@@ -69,15 +69,8 @@ export default function MarketplacePage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalSites, setTotalSites] = useState(0);
 
-  // Format traffic numbers (5K, 1M format)
-  const formatTraffic = (num: number) => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + "M";
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + "K";
-    }
-    return num.toString();
-  };
+  // Traffic is now stored as string (e.g., "4.5M")
+  // No need for formatting function anymore
 
   // Reset to page 1 when filters change
   useEffect(() => {
@@ -239,11 +232,9 @@ export default function MarketplacePage() {
         site.domain_rating >= drRange[0] && site.domain_rating <= drRange[1]
     );
 
-    filtered = filtered.filter(
-      (site) =>
-        site.monthly_traffic >= trafficRange[0] &&
-        site.monthly_traffic <= trafficRange[1]
-    );
+    // Traffic filtering is now handled by the backend
+    // Since monthly_traffic is stored as string (e.g., "4.5M"),
+    // we can't filter it on the frontend
 
     filtered = filtered.filter(
       (site) => site.price >= priceRange[0] && site.price <= priceRange[1]
@@ -535,7 +526,7 @@ export default function MarketplacePage() {
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-slate-600">Traffic</span>
                             <span className="font-semibold text-slate-900">
-                              {formatTraffic(site.monthly_traffic)}/mo
+                              {site.monthly_traffic}/mo
                             </span>
                           </div>
 
