@@ -8,13 +8,13 @@
   "theme_color": "#10b981",
   "icons": [
     {
-      "src": "/logo/logo.png",
+      "src": "/logo/url-icon/url-icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "/logo/logo.png",
+      "src": "/logo/url-icon/url-icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
