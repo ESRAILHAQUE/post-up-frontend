@@ -41,7 +41,7 @@ interface Site {
   monthly_traffic: number;
   price: number;
   category: string;
-  description: string;
+  publishedExampleUrl: string;
   turnaround_days: number;
   is_active: boolean;
   image_url: string | null;
@@ -77,7 +77,7 @@ export default function HomePage() {
           monthly_traffic: site.monthlyTraffic,
           price: site.price,
           category: site.category,
-          description: site.description,
+          publishedExampleUrl: site.publishedExampleUrl || site.description,
           turnaround_days: site.turnaroundDays,
           is_active: site.isActive,
           image_url: site.logoUrl || null,
@@ -308,38 +308,20 @@ export default function HomePage() {
                       </span>
                     </div>
 
-                    {/* Description with Read More */}
-                    {site.description && (
+                    {/* Published Example URL */}
+                    {site.publishedExampleUrl && (
                       <div className="space-y-2">
                         <p className="text-xs font-semibold text-slate-700">
-                          Description:
+                          Published Example:
                         </p>
                         <div className="text-xs text-slate-600">
-                          {expandedDescriptions.has(site.id) ? (
-                            <div className="space-y-2">
-                              <p className="whitespace-pre-wrap">
-                                {site.description}
-                              </p>
-                              <button
-                                onClick={() => toggleDescription(site.id)}
-                                className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium">
-                                <ChevronUp className="h-3 w-3" />
-                                Show Less
-                              </button>
-                            </div>
-                          ) : (
-                            <div className="space-y-2">
-                              <p className="line-clamp-2">{site.description}</p>
-                              {site.description.length > 100 && (
-                                <button
-                                  onClick={() => toggleDescription(site.id)}
-                                  className="flex items-center gap-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium">
-                                  <ChevronDown className="h-3 w-3" />
-                                  Read More
-                                </button>
-                              )}
-                            </div>
-                          )}
+                          <a
+                            href={site.publishedExampleUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-emerald-600 hover:text-emerald-700 underline break-all">
+                            {site.publishedExampleUrl}
+                          </a>
                         </div>
                       </div>
                     )}

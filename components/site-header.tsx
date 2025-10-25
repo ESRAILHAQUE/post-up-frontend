@@ -24,14 +24,7 @@ export function SiteHeader() {
               priority
             />
           </div>
-          <div className="flex flex-col">
-            <span className="text-2xl font-bold text-white tracking-tight">
-              GUEST POST UP
-            </span>
-            <span className="text-base text-emerald-400 font-medium -mt-1">
-              Guest Posting Platform
-            </span>
-          </div>
+          
         </Link>
 
         {/* Desktop Navigation */}

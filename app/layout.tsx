@@ -5,7 +5,7 @@ import { AuthProvider } from "@/lib/auth/auth-context";
 import { Toaster } from "sonner";
 
 export const metadata: Metadata = {
-  title: "PostUp - Premium Guest Posts on High Authority Sites",
+  title: "GUEST POST UP - Premium Guest Posts on High Authority Sites",
   description:
     "Get high-quality backlinks from authoritative websites. Boost your SEO with our curated guest posting opportunities.",
   generator: "v0.app",
