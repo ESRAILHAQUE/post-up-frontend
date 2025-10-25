@@ -12,11 +12,25 @@ export const metadata: Metadata = {
   manifest: "/manifest.json",
   icons: {
     icon: [
-      { url: "/logo/url-icon/url-icon.png", sizes: "192x192", type: "image/png" },
-      { url: "/logo/url-icon/url-icon.png", sizes: "32x32", type: "image/png" },
-      { url: "/logo/url-icon/url-icon.png", sizes: "512x512", type: "image/png" },
+      {
+        url: "/logo/url-icon/url-icon.jpg",
+        sizes: "192x192",
+        type: "image/jpeg",
+      },
+      { url: "/logo/url-icon/url-icon.jpg", sizes: "32x32", type: "image/jpeg" },
+      {
+        url: "/logo/url-icon/url-icon.jpg",
+        sizes: "512x512",
+        type: "image/jpeg",
+      },
     ],
-    apple: [{ url: "/logo/url-icon/url-icon.png", sizes: "180x180", type: "image/png" }],
+    apple: [
+      {
+        url: "/logo/url-icon/url-icon.jpg",
+        sizes: "180x180",
+        type: "image/jpeg",
+      },
+    ],
   },
 };
 
