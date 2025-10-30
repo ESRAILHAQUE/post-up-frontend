@@ -59,9 +59,16 @@ type Package = {
   imageUrl?: string;
 };
 
-const stripePromise = loadStripe(
-  process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!
-);
+const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+if (typeof window !== "undefined") {
+  // Debug the key prefix in the browser (will show pk_test... or pk_live...)
+  // Do not log full key
+  console.log(
+    "[Checkout] Using Stripe PK:",
+    PUBLISHABLE_KEY ? PUBLISHABLE_KEY.slice(0, 10) + "…" : "<missing>"
+  );
+}
+const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : null;
 
 function CheckoutForm({
   item,
@@ -88,6 +95,7 @@ function CheckoutForm({
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isPaymentElementReady, setIsPaymentElementReady] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -131,6 +139,17 @@ function CheckoutForm({
     e.preventDefault();
 
     if (!stripe || !elements) {
+      setError(
+        "Payment form is not ready yet. Please wait a moment and try again."
+      );
+      return;
+    }
+
+    const paymentElement = elements.getElement(PaymentElement);
+    if (!paymentElement || !isPaymentElementReady) {
+      setError(
+        "Payment form is still loading. Please wait a moment and try again."
+      );
       return;
     }
 
@@ -600,7 +619,22 @@ function CheckoutForm({
 
       <div className="space-y-4">
         <h3 className="font-semibold text-lg">Payment Information</h3>
-        <PaymentElement />
+        <PaymentElement
+          onReady={() => setIsPaymentElementReady(true)}
+          onLoadError={(e: any) => {
+            console.error("[Stripe] PaymentElement load error:", e);
+            setError(
+              "Failed to load payment form. Please refresh and try again."
+            );
+          }}
+          onChange={(e: any) => {
+            if (e?.error) {
+              setError(e.error.message || "Invalid payment details");
+            } else {
+              setError(null);
+            }
+          }}
+        />
       </div>
 
       {error && (
@@ -613,7 +647,7 @@ function CheckoutForm({
         type="submit"
         size="lg"
         className="w-full"
-        disabled={!stripe || loading}>
+        disabled={!stripe || loading || !isPaymentElementReady}>
         {loading ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -665,33 +699,46 @@ function CheckoutContent() {
             price = (itemData as Package).discounted_price;
           }
         } else if (siteId) {
-          // Fetch site from backend
-          try {
-            const response = await apiClient.get(`/sites/${siteId}`);
-            const siteData = response.data.data;
-            // Map backend camelCase to frontend snake_case
-            itemData = {
-              id: siteData._id,
-              name: siteData.name,
-              url: siteData.url,
-              description: siteData.description || "",
-              category: siteData.category,
-              domain_authority: siteData.domainAuthority,
-              monthly_traffic: siteData.monthlyTraffic,
-              price: siteData.price,
-              turnaround_days: siteData.turnaroundDays,
-              logo_url: siteData.logoUrl,
-              featured: siteData.isFeatured || false,
-            } as Site;
-            type = "site";
-            if (itemData) {
+          // Support both real backend ObjectIds and mock IDs from demo data
+          const isObjectId = /^[a-fA-F0-9]{24}$/.test(siteId);
+          if (isObjectId) {
+            // Fetch site from backend
+            try {
+              const response = await apiClient.get(`/sites/${siteId}`);
+              const siteData = response.data.data;
+              // Map backend camelCase to frontend snake_case
+              itemData = {
+                id: siteData._id,
+                name: siteData.name,
+                url: siteData.url,
+                description: siteData.description || "",
+                category: siteData.category,
+                domain_authority: siteData.domainAuthority,
+                monthly_traffic: siteData.monthlyTraffic,
+                price: siteData.price,
+                turnaround_days: siteData.turnaroundDays,
+                logo_url: siteData.logoUrl,
+                featured: siteData.isFeatured || false,
+              } as Site;
+              type = "site";
               price = (itemData as Site).price;
+            } catch (siteError) {
+              console.error("[v0] Site fetch error:", siteError);
+              throw new Error(
+                "Site not found. Please select a site from the marketplace."
+              );
             }
-          } catch (siteError) {
-            console.error("[v0] Site fetch error:", siteError);
-            throw new Error(
-              "Site not found. Please select a site from the marketplace."
-            );
+          } else {
+            // Fall back to mock dataset
+            const mock = getSiteById(siteId);
+            if (!mock) {
+              throw new Error(
+                "Invalid site link. Please select a site from the marketplace."
+              );
+            }
+            itemData = mock as unknown as Site;
+            type = "site";
+            price = mock.price;
           }
         }
 
@@ -704,11 +751,19 @@ function CheckoutContent() {
 
         // Create payment intent via backend
         const response = await apiClient.post("/payments/create-intent", {
-          orderId: (itemData as any)._id || (itemData as any).id, // Use MongoDB _id
+          orderId: (itemData as any)._id || (itemData as any).id, // Use MongoDB _id or mock id
           amount: price,
         });
 
-        setClientSecret(response.data.data.clientSecret);
+        const secret = response.data.data.clientSecret as string | undefined;
+        if (!secret || !secret.startsWith("pi_")) {
+          throw new Error("Invalid client secret returned by server");
+        }
+        console.log(
+          "[Checkout] clientSecret received:",
+          secret.slice(0, 12) + "…"
+        );
+        setClientSecret(secret);
       } catch (err: any) {
         console.error("[v0] Checkout init error:", err);
         setError(err.message || "Failed to initialize checkout");
@@ -733,6 +788,19 @@ function CheckoutContent() {
       <div className="container max-w-2xl py-20">
         <Alert variant="destructive">
           <AlertDescription>{error || "Item not found"}</AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+
+  if (!PUBLISHABLE_KEY) {
+    return (
+      <div className="container max-w-2xl py-20">
+        <Alert variant="destructive">
+          <AlertDescription>
+            Stripe publishable key is not set. Please set
+            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY and reload.
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -884,16 +952,15 @@ function CheckoutContent() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {clientSecret && (
+              {clientSecret && stripePromise ? (
                 <Elements
+                  key={clientSecret}
                   stripe={stripePromise}
                   options={{
                     clientSecret,
                     appearance: {
                       theme: "stripe",
-                      variables: {
-                        colorPrimary: "#0f172a",
-                      },
+                      variables: { colorPrimary: "#0f172a" },
                     },
                   }}>
                   <CheckoutForm
@@ -902,6 +969,12 @@ function CheckoutContent() {
                     clientSecret={clientSecret}
                   />
                 </Elements>
+              ) : (
+                <Alert variant="destructive">
+                  <AlertDescription>
+                    Unable to initialize payment. Please refresh to try again.
+                  </AlertDescription>
+                </Alert>
               )}
             </CardContent>
           </Card>

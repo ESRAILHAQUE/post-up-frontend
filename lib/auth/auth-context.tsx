@@ -73,6 +73,7 @@ interface AuthContextType {
     currentPassword: string,
     newPassword: string
   ) => Promise<{ success: boolean; error?: string }>;
+  resetPassword: (email: string) => Promise<{ success: boolean; error?: string }>;
   isLoading: boolean;
 }
 
@@ -438,6 +439,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const resetPassword = async (email: string) => {
+    try {
+      if (!email) {
+        return { success: false, error: "Email is required" };
+      }
+      const { sendPasswordResetEmail } = await import("firebase/auth");
+      await sendPasswordResetEmail(auth, email);
+      return { success: true };
+    } catch (error: any) {
+      console.error("Reset password error:", error);
+      return {
+        success: false,
+        error:
+          error?.message ||
+          "Failed to send reset email. Please check the address.",
+      };
+    }
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -450,6 +470,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         googleSignIn,
         logout,
         changePassword,
+        resetPassword,
         isLoading,
       }}>
       {children}

@@ -15,12 +15,14 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import apiClient from "@/lib/api/client";
+import { useAuth } from "@/lib/auth/auth-context";
 import Link from "next/link";
 import { CheckCircle2, ArrowRight, Loader2 } from "lucide-react";
 
 function SuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const { user } = useAuth();
   const orderId = searchParams.get("order");
   const [order, setOrder] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -178,7 +180,7 @@ function SuccessContent() {
 
           <div className="flex flex-col sm:flex-row gap-3">
             <Button asChild className="flex-1">
-              <Link href="/dashboard">
+              <Link href={user?.role === "admin" ? "/admin" : "/dashboard"}>
                 View Dashboard <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>

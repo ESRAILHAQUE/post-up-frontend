@@ -1,38 +1,70 @@
-"use client"
+"use client";
 
-import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import Link from "next/link"
-import { MessageCircle, Mail, Phone, Clock, Search, Send, Loader2, CheckCircle2 } from "lucide-react"
-import { useState } from "react"
-import Swal from "sweetalert2"
-import apiClient from "@/lib/api/client"
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-footer";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import Link from "next/link";
+import {
+  MessageCircle,
+  Mail,
+  Phone,
+  Clock,
+  Search,
+  Send,
+  Loader2,
+  CheckCircle2,
+} from "lucide-react";
+import { useState } from "react";
+import Swal from "sweetalert2";
+import apiClient from "@/lib/api/client";
 
 export default function SupportPage() {
-  const [loading, setLoading] = useState(false)
-  const [name, setName] = useState("")
-  const [email, setEmail] = useState("")
-  const [subject, setSubject] = useState("")
-  const [category, setCategory] = useState("")
-  const [message, setMessage] = useState("")
+  const [loading, setLoading] = useState(false);
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [subject, setSubject] = useState("");
+  const [category, setCategory] = useState("");
+  const [message, setMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
 
-    if (!name.trim() || !email.trim() || !subject.trim() || !category || !message.trim()) {
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      !subject.trim() ||
+      !category ||
+      !message.trim()
+    ) {
       Swal.fire({
         icon: "error",
         title: "Missing Information",
         text: "Please fill in all required fields.",
-      })
-      return
+      });
+      return;
     }
 
     if (message.trim().length < 3) {
@@ -40,11 +72,11 @@ export default function SupportPage() {
         icon: "error",
         title: "Message Too Short",
         text: "Please provide a more detailed message (at least 3 characters).",
-      })
-      return
+      });
+      return;
     }
 
-    setLoading(true)
+    setLoading(true);
 
     try {
       const ticketData = {
@@ -53,48 +85,51 @@ export default function SupportPage() {
         subject: subject.trim(),
         category,
         message: message.trim(),
-      }
+      };
 
-      const response = await apiClient.post("/support/public", ticketData)
+      const response = await apiClient.post("/support/public", ticketData);
 
       Swal.fire({
         icon: "success",
         title: "Message Sent!",
         text: `Your support ticket has been created. We'll get back to you within 24 hours at ${email}.`,
-      })
+      });
 
-      setName("")
-      setEmail("")
-      setSubject("")
-      setCategory("")
-      setMessage("")
+      setName("");
+      setEmail("");
+      setSubject("");
+      setCategory("");
+      setMessage("");
     } catch (error: any) {
-      console.error("Error creating support ticket:", error)
+      console.error("Error creating support ticket:", error);
 
-      let errorMessage = "Failed to submit support ticket. Please try again."
+      let errorMessage = "Failed to submit support ticket. Please try again.";
 
-      if (error.response?.data?.details && Array.isArray(error.response.data.details)) {
+      if (
+        error.response?.data?.details &&
+        Array.isArray(error.response.data.details)
+      ) {
         const validationErrors = error.response.data.details
           .map((detail: any) => detail.message)
-          .join(", ")
-        errorMessage = `Validation Error: ${validationErrors}`
+          .join(", ");
+        errorMessage = `Validation Error: ${validationErrors}`;
       } else if (error.response?.data?.error) {
-        errorMessage = error.response.data.error
+        errorMessage = error.response.data.error;
       } else if (error.response?.data?.message) {
-        errorMessage = error.response.data.message
+        errorMessage = error.response.data.message;
       } else if (error.message) {
-        errorMessage = error.message
+        errorMessage = error.message;
       }
 
       Swal.fire({
         icon: "error",
         title: "Error",
         text: errorMessage,
-      })
+      });
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
   const faqs = [
     {
       question: "How long does it take to get my guest post published?",
@@ -136,7 +171,7 @@ export default function SupportPage() {
       answer:
         "Yes! You can track all your orders in real-time through your dashboard. You'll receive email notifications at each stage: order received, in progress, and published with the live link.",
     },
-  ]
+  ];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -146,13 +181,18 @@ export default function SupportPage() {
       <section className="py-16 bg-gradient-to-br from-slate-50 via-emerald-50 to-slate-50">
         <div className="container">
           <div className="max-w-3xl mx-auto text-center space-y-4">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-balance">How Can We Help You?</h1>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-balance">
+              How Can We Help You?
+            </h1>
             <p className="text-xl text-muted-foreground leading-relaxed">
               Get answers to your questions or reach out to our support team
             </p>
             <div className="relative max-w-2xl mx-auto pt-4">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-              <Input placeholder="Search for answers..." className="pl-12 h-12 text-base" />
+              <Input
+                placeholder="Search for answers..."
+                className="pl-12 h-12 text-base"
+              />
             </div>
           </div>
         </div>
@@ -168,11 +208,15 @@ export default function SupportPage() {
                   <MessageCircle className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle>Live Chat</CardTitle>
-                <CardDescription>Get instant answers from our team</CardDescription>
+                <CardDescription>
+                  Get instant answers from our team
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Button className="w-full">Start Chat</Button>
-                <p className="text-xs text-muted-foreground mt-2">Average response: 2 minutes</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Average response: 2 minutes
+                </p>
               </CardContent>
             </Card>
 
@@ -185,10 +229,15 @@ export default function SupportPage() {
                 <CardDescription>Send us a detailed message</CardDescription>
               </CardHeader>
               <CardContent>
-                <Button variant="outline" className="w-full bg-transparent" asChild>
+                <Button
+                  variant="outline"
+                  className="w-full bg-transparent"
+                  asChild>
                   <Link href="#contact-form">Send Email</Link>
                 </Button>
-                <p className="text-xs text-muted-foreground mt-2">Response within 24 hours</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Response within 24 hours
+                </p>
               </CardContent>
             </Card>
 
@@ -204,7 +253,9 @@ export default function SupportPage() {
                 <Button variant="outline" className="w-full bg-transparent">
                   +1 (555) 123-4567
                 </Button>
-                <p className="text-xs text-muted-foreground mt-2">Mon-Fri, 9am-6pm EST</p>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Mon-Fri, 9am-6pm EST
+                </p>
               </CardContent>
             </Card>
           </div>
@@ -216,17 +267,26 @@ export default function SupportPage() {
         <div className="container">
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold mb-4">Frequently Asked Questions</h2>
-              <p className="text-muted-foreground">Find quick answers to common questions</p>
+              <h2 className="text-3xl font-bold mb-4">
+                Frequently Asked Questions
+              </h2>
+              <p className="text-muted-foreground">
+                Find quick answers to common questions
+              </p>
             </div>
 
             <Accordion type="single" collapsible className="space-y-4">
               {faqs.map((faq, index) => (
-                <AccordionItem key={index} value={`item-${index}`} className="bg-background rounded-lg px-6 border">
+                <AccordionItem
+                  key={index}
+                  value={`item-${index}`}
+                  className="bg-background rounded-lg px-6 border">
                   <AccordionTrigger className="text-left hover:no-underline">
                     <span className="font-semibold">{faq.question}</span>
                   </AccordionTrigger>
-                  <AccordionContent className="text-muted-foreground leading-relaxed">{faq.answer}</AccordionContent>
+                  <AccordionContent className="text-muted-foreground leading-relaxed">
+                    {faq.answer}
+                  </AccordionContent>
                 </AccordionItem>
               ))}
             </Accordion>
@@ -241,7 +301,8 @@ export default function SupportPage() {
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold mb-4">Send Us a Message</h2>
               <p className="text-muted-foreground">
-                Fill out the form below and we'll get back to you within 24 hours
+                Fill out the form below and we'll get back to you within 24
+                hours
               </p>
             </div>
 
@@ -288,16 +349,27 @@ export default function SupportPage() {
 
                       <div className="space-y-2">
                         <Label htmlFor="category">Category *</Label>
-                        <Select value={category} onValueChange={setCategory} required>
+                        <Select
+                          value={category}
+                          onValueChange={setCategory}
+                          required>
                           <SelectTrigger>
                             <SelectValue placeholder="Select a category" />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="order">Order Issue</SelectItem>
-                            <SelectItem value="payment">Payment Problem</SelectItem>
-                            <SelectItem value="technical">Technical Support</SelectItem>
-                            <SelectItem value="account">Account Question</SelectItem>
-                            <SelectItem value="billing">Billing Inquiry</SelectItem>
+                            <SelectItem value="payment">
+                              Payment Problem
+                            </SelectItem>
+                            <SelectItem value="technical">
+                              Technical Support
+                            </SelectItem>
+                            <SelectItem value="account">
+                              Account Question
+                            </SelectItem>
+                            <SelectItem value="billing">
+                              Billing Inquiry
+                            </SelectItem>
                             <SelectItem value="other">Other</SelectItem>
                           </SelectContent>
                         </Select>
@@ -315,7 +387,11 @@ export default function SupportPage() {
                         />
                       </div>
 
-                      <Button type="submit" disabled={loading} className="w-full" size="lg">
+                      <Button
+                        type="submit"
+                        disabled={loading}
+                        className="w-full"
+                        size="lg">
                         {loading ? (
                           <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -347,9 +423,9 @@ export default function SupportPage() {
                       <div>
                         <p className="text-sm font-medium mb-1">Email</p>
                         <a
-                          href="mailto:support@guestpostup.com"
+                          href="mailto:info@guestpostup.com"
                           className="text-sm text-primary hover:underline">
-                          support@guestpostup.com
+                          info@guestpostup.com
                         </a>
                       </div>
                     </div>
@@ -357,14 +433,20 @@ export default function SupportPage() {
                       <Phone className="h-5 w-5 text-primary mt-0.5" />
                       <div>
                         <p className="text-sm font-medium mb-1">Phone</p>
-                        <p className="text-sm text-muted-foreground">+1 (555) 123-4567</p>
+                        <p className="text-sm text-muted-foreground">
+                          +1 (555) 123-4567
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-start gap-3">
                       <Clock className="h-5 w-5 text-primary mt-0.5" />
                       <div>
-                        <p className="text-sm font-medium mb-1">Response Time</p>
-                        <p className="text-sm text-muted-foreground">Within 24 hours</p>
+                        <p className="text-sm font-medium mb-1">
+                          Response Time
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          Within 24 hours
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -412,18 +494,24 @@ export default function SupportPage() {
                   <Clock className="h-5 w-5 text-primary" />
                   Business Hours
                 </CardTitle>
-                <CardDescription>We're here to help during the following times</CardDescription>
+                <CardDescription>
+                  We're here to help during the following times
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-3">
                     <div className="flex justify-between items-center py-2 border-b">
                       <span className="font-medium">Monday - Friday</span>
-                      <span className="text-muted-foreground">9:00 AM - 6:00 PM EST</span>
+                      <span className="text-muted-foreground">
+                        9:00 AM - 6:00 PM EST
+                      </span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b">
                       <span className="font-medium">Saturday</span>
-                      <span className="text-muted-foreground">10:00 AM - 4:00 PM EST</span>
+                      <span className="text-muted-foreground">
+                        10:00 AM - 4:00 PM EST
+                      </span>
                     </div>
                     <div className="flex justify-between items-center py-2 border-b">
                       <span className="font-medium">Sunday</span>
@@ -432,7 +520,9 @@ export default function SupportPage() {
                   </div>
                   <div className="bg-primary/5 rounded-lg p-6 flex flex-col justify-center">
                     <p className="text-sm text-muted-foreground mb-4">
-                      Outside business hours? No problem! Submit a ticket anytime and we'll respond first thing during our next business day.
+                      Outside business hours? No problem! Submit a ticket
+                      anytime and we'll respond first thing during our next
+                      business day.
                     </p>
                     <div className="flex items-center gap-2 text-sm">
                       <div className="h-2 w-2 rounded-full bg-green-500 animate-pulse"></div>
@@ -448,5 +538,5 @@ export default function SupportPage() {
 
       <SiteFooter />
     </div>
-  )
+  );
 }

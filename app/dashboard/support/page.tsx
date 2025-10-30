@@ -417,9 +417,9 @@ export default function SupportPage() {
                       Email Support
                     </p>
                     <a
-                      href="mailto:support@guestpostup.com"
+                      href="mailto:info@guestpostup.com"
                       className="text-emerald-600 hover:text-emerald-700 text-sm font-medium">
-                      support@guestpostup.com
+                      info@guestpostup.com
                     </a>
                   </div>
                 </div>

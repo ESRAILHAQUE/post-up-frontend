@@ -26,7 +26,11 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
   const router = useRouter();
-  const { emailLogin, googleSignIn } = useAuth();
+  const { emailLogin, googleSignIn, resetPassword } = useAuth();
+  const [resetOpen, setResetOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetMsg, setResetMsg] = useState<string | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -168,6 +172,18 @@ export default function LoginPage() {
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
+            <div className="w-full text-right">
+              <button
+                type="button"
+                onClick={() => {
+                  setResetEmail(email);
+                  setResetMsg(null);
+                  setResetOpen(true);
+                }}
+                className="text-sm text-emerald-500 hover:text-emerald-400 hover:underline">
+                Forgot password?
+              </button>
+            </div>
             <Button
               type="submit"
               className="w-full bg-emerald-500 hover:bg-emerald-600"
@@ -245,6 +261,60 @@ export default function LoginPage() {
           </CardFooter>
         </form>
       </Card>
+
+      {resetOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div className="w-full max-w-md rounded-lg bg-background border p-6 space-y-4">
+            <div>
+              <h2 className="text-xl font-semibold">Reset your password</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Enter your account email. We'll send a password reset link.
+              </p>
+            </div>
+            {resetMsg && (
+              <div className="text-sm p-3 rounded border bg-muted/40">{resetMsg}</div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="reset-email">Email</Label>
+              <Input
+                id="reset-email"
+                type="email"
+                value={resetEmail}
+                onChange={(e) => setResetEmail(e.target.value)}
+                placeholder="you@example.com"
+                autoComplete="email"
+              />
+            </div>
+            <div className="flex gap-3 pt-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setResetOpen(false)}
+                disabled={resetLoading}
+                className="bg-transparent flex-1">
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={async () => {
+                  setResetLoading(true);
+                  setResetMsg(null);
+                  const res = await resetPassword(resetEmail.trim());
+                  if (res.success) {
+                    setResetMsg("Password reset email sent. Check your inbox (and spam).");
+                  } else {
+                    setResetMsg(res.error || "Failed to send reset email.");
+                  }
+                  setResetLoading(false);
+                }}
+                disabled={resetLoading || !resetEmail}
+                className="flex-1 bg-emerald-500 hover:bg-emerald-600">
+                {resetLoading ? "Sending..." : "Send reset link"}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
