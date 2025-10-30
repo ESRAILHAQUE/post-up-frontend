@@ -120,10 +120,10 @@ function CheckoutForm({
         setError("Maximum 5 files allowed");
         return;
       }
-      // Limit file size to 10MB per file
-      const oversizedFiles = fileArray.filter((f) => f.size > 10 * 1024 * 1024);
+      // Limit file size to 50MB per file
+      const oversizedFiles = fileArray.filter((f) => f.size > 50 * 1024 * 1024);
       if (oversizedFiles.length > 0) {
-        setError("Each file must be less than 10MB");
+        setError("Each file must be less than 50MB");
         return;
       }
       setUploadedFiles([...uploadedFiles, ...fileArray]);
@@ -388,7 +388,7 @@ function CheckoutForm({
               />
               <p className="text-xs text-muted-foreground">
                 Upload documents, images, or reference materials (Max 5 files,
-                10MB each)
+                50MB each)
               </p>
 
               {uploadedFiles.length > 0 && (
