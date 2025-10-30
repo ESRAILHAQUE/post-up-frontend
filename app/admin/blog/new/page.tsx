@@ -39,6 +39,7 @@ export default function NewBlogPostPage() {
     isPublished: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPreview, setShowPreview] = useState(true);
 
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "admin")) {
@@ -241,6 +242,28 @@ export default function NewBlogPostPage() {
                   <p className="text-sm text-gray-500 mt-1">
                     Use HTML tags for formatting
                   </p>
+                  <div className="flex items-center gap-2 mt-3">
+                    <input
+                      id="togglePreview"
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={showPreview}
+                      onChange={(e) => setShowPreview(e.target.checked)}
+                    />
+                    <Label htmlFor="togglePreview">Live Preview</Label>
+                  </div>
+                  {showPreview && (
+                    <div className="mt-4 rounded-lg border p-4 bg-white">
+                      <div className="prose max-w-none">
+                        <div
+                          // Rendering trusted admin-provided HTML
+                          dangerouslySetInnerHTML={{
+                            __html: formData.content || "<p class=\"text-gray-500\">Nothing to preview</p>",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
