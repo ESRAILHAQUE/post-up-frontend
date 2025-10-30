@@ -444,17 +444,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (!email) {
         return { success: false, error: "Email is required" };
       }
-      const { sendPasswordResetEmail } = await import("firebase/auth");
-      await sendPasswordResetEmail(auth, email);
+      const resp = await fetch(
+        (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api/v1") +
+          "/auth/password-reset",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        }
+      );
+      const data = await resp.json();
+      if (!resp.ok || data?.success === false) {
+        return { success: false, error: data?.error || "User not found." };
+      }
       return { success: true };
     } catch (error: any) {
       console.error("Reset password error:", error);
-      return {
-        success: false,
-        error:
-          error?.message ||
-          "Failed to send reset email. Please check the address.",
-      };
+      return { success: false, error: "Failed to send reset email." };
     }
   };
 
