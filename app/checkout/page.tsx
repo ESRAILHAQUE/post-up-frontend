@@ -620,17 +620,24 @@ function CheckoutForm({
       <div className="space-y-4">
         <h3 className="font-semibold text-lg">Payment Information</h3>
         <PaymentElement
-          onReady={() => setIsPaymentElementReady(true)}
+          onReady={() => {
+            console.log("[Stripe] PaymentElement ready");
+            setIsPaymentElementReady(true);
+          }}
           onLoadError={(e: any) => {
             console.error("[Stripe] PaymentElement load error:", e);
+            const errorMsg = e?.error?.message || e?.message || "Failed to load payment form";
+            console.error("[Stripe] Error details:", JSON.stringify(e, null, 2));
             setError(
-              "Failed to load payment form. Please refresh and try again."
+              `${errorMsg}. Please check your Stripe configuration or refresh and try again.`
             );
           }}
           onChange={(e: any) => {
             if (e?.error) {
+              console.error("[Stripe] PaymentElement change error:", e.error);
               setError(e.error.message || "Invalid payment details");
-            } else {
+            } else if (e?.complete) {
+              console.log("[Stripe] Payment details complete");
               setError(null);
             }
           }}
