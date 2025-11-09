@@ -142,13 +142,13 @@ function CheckoutForm({
 
   const isFormValid = () => {
     if (!name || !email) return false;
-    
+
     if (itemType === "site") {
       if (!targetUrl || !articleTitle || !anchorText) return false;
     } else if (itemType === "package") {
       if (!targetUrl || !articleTitle || !anchorText) return false;
     }
-    
+
     return true;
   };
 
@@ -634,12 +634,13 @@ function CheckoutForm({
         {!isFormValid() && (
           <Alert>
             <AlertDescription>
-              Please fill in all required fields above to select a payment method.
+              Please fill in all required fields above to select a payment
+              method.
             </AlertDescription>
           </Alert>
         )}
-        
-        <div className="grid grid-cols-2 gap-4">
+
+        <div className={`grid ${user ? "grid-cols-2" : "grid-cols-1"} gap-4`}>
           <button
             type="button"
             onClick={() => setPaymentMethod("paypal")}
@@ -653,31 +654,39 @@ function CheckoutForm({
             }`}>
             <div className="flex items-center justify-center gap-2">
               <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor">
-                <path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 00-.794.68l-.04.22-.63 3.993-.028.15a.806.806 0 01-.795.68H7.822a.563.563 0 01-.555-.65l1.316-8.347.014-.099a.806.806 0 01.794-.68h1.632c3.238 0 5.774-1.314 6.514-5.12.257-1.313.192-2.447-.3-3.327-.09-.16-.192-.312-.3-.457C18.213 5.894 20.25 7.23 20.067 8.478z" fill="#139AD6"/>
-                <path d="M17.937 7.968c-.09-.16-.192-.312-.3-.457-.975-1.096-2.747-1.556-5.006-1.556h-4.29a.806.806 0 00-.795.68l-1.14 7.229-.033.209a.805.805 0 00.794.68h1.632c3.238 0 5.774-1.314 6.514-5.12.257-1.313.192-2.447-.3-3.327-.09-.16-.192-.312-.3-.457z" fill="#263B80"/>
+                <path
+                  d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 00-.794.68l-.04.22-.63 3.993-.028.15a.806.806 0 01-.795.68H7.822a.563.563 0 01-.555-.65l1.316-8.347.014-.099a.806.806 0 01.794-.68h1.632c3.238 0 5.774-1.314 6.514-5.12.257-1.313.192-2.447-.3-3.327-.09-.16-.192-.312-.3-.457C18.213 5.894 20.25 7.23 20.067 8.478z"
+                  fill="#139AD6"
+                />
+                <path
+                  d="M17.937 7.968c-.09-.16-.192-.312-.3-.457-.975-1.096-2.747-1.556-5.006-1.556h-4.29a.806.806 0 00-.795.68l-1.14 7.229-.033.209a.805.805 0 00.794.68h1.632c3.238 0 5.774-1.314 6.514-5.12.257-1.313.192-2.447-.3-3.327-.09-.16-.192-.312-.3-.457z"
+                  fill="#263B80"
+                />
               </svg>
               <span className="font-semibold">PayPal</span>
             </div>
           </button>
 
-          <button
-            type="button"
-            onClick={() => setPaymentMethod("balance")}
-            disabled={!isFormValid()}
-            className={`p-4 border-2 rounded-lg transition-all ${
-              !isFormValid()
-                ? "opacity-50 cursor-not-allowed border-border"
-                : paymentMethod === "balance"
-                ? "border-primary bg-primary/5"
-                : "border-border hover:border-primary/50"
-            }`}>
-            <div className="text-center">
-              <div className="font-semibold">Balance</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                ${userBalance.toFixed(2)}
+          {user && (
+            <button
+              type="button"
+              onClick={() => setPaymentMethod("balance")}
+              disabled={!isFormValid()}
+              className={`p-4 border-2 rounded-lg transition-all ${
+                !isFormValid()
+                  ? "opacity-50 cursor-not-allowed border-border"
+                  : paymentMethod === "balance"
+                  ? "border-primary bg-primary/5"
+                  : "border-border hover:border-primary/50"
+              }`}>
+              <div className="text-center">
+                <div className="font-semibold">Balance</div>
+                <div className="text-sm text-muted-foreground mt-1">
+                  ${userBalance.toFixed(2)}
+                </div>
               </div>
-            </div>
-          </button>
+            </button>
+          )}
         </div>
 
         {paymentMethod === "paypal" && isFormValid() && (
@@ -691,8 +700,8 @@ function CheckoutForm({
               </Alert>
             ) : (
               <PayPalButtons
-              style={{ layout: "vertical", label: "pay" }}
-              disabled={loading || !isFormValid()}
+                style={{ layout: "vertical", label: "pay" }}
+                disabled={loading || !isFormValid()}
                 createOrder={async () => {
                   try {
                     const orderData = await prepareOrderData();
@@ -762,7 +771,11 @@ function CheckoutForm({
       )}
 
       {paymentMethod === "balance" && (
-        <Button type="submit" size="lg" className="w-full" disabled={loading || !isFormValid()}>
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={loading || !isFormValid()}>
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
