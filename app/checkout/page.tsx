@@ -23,13 +23,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/lib/auth/auth-context";
 import apiClient from "@/lib/api/client";
 import { getSiteById } from "@/lib/data/mock-data";
-import { loadStripe } from "@stripe/stripe-js";
-import {
-  Elements,
-  PaymentElement,
-  useStripe,
-  useElements,
-} from "@stripe/react-stripe-js";
+import { PayPalScriptProvider, PayPalButtons } from "@paypal/react-paypal-js";
 import { Loader2, Check } from "lucide-react";
 
 type Site = {
@@ -59,28 +53,22 @@ type Package = {
   imageUrl?: string;
 };
 
-const PUBLISHABLE_KEY = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "AUuwKpEu_jMYMh_rSvsd00trldIFK04BqOMq0QZkmTO_GMI1lCF1uevwUD5gUW7Mg6Y0wZag3NSj430j";
+
 if (typeof window !== "undefined") {
-  // Debug the key prefix in the browser (will show pk_test... or pk_live...)
-  // Do not log full key
   console.log(
-    "[Checkout] Using Stripe PK:",
-    PUBLISHABLE_KEY ? PUBLISHABLE_KEY.slice(0, 10) + "…" : "<missing>"
+    "[Checkout] Using PayPal Client ID:",
+    PAYPAL_CLIENT_ID ? PAYPAL_CLIENT_ID.slice(0, 15) + "…" : "<missing>"
   );
 }
-const stripePromise = PUBLISHABLE_KEY ? loadStripe(PUBLISHABLE_KEY) : null;
 
 function CheckoutForm({
   item,
   itemType,
-  clientSecret,
 }: {
   item: Site | Package;
   itemType: "site" | "package";
-  clientSecret: string;
 }) {
-  const stripe = useStripe();
-  const elements = useElements();
   const router = useRouter();
   const { user } = useAuth();
 
@@ -95,12 +83,25 @@ function CheckoutForm({
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isPaymentElementReady, setIsPaymentElementReady] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "balance">("paypal");
+  const [userBalance, setUserBalance] = useState(0);
 
   useEffect(() => {
     if (user) {
       setEmail(user.email);
       setName(user.name || "");
+      
+      // Fetch user balance
+      const fetchBalance = async () => {
+        try {
+          const response = await apiClient.get(`/users/balance/${user.id}`);
+          setUserBalance(response.data.data?.balance || 0);
+        } catch (error) {
+          console.error("Error fetching balance:", error);
+          setUserBalance(0);
+        }
+      };
+      fetchBalance();
     }
   }, [user]);
 
@@ -135,107 +136,93 @@ function CheckoutForm({
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
   };
 
+  const prepareOrderData = async () => {
+    const userId = user?.id || "guest";
+    const price = getPrice();
+    const orderData: any = {
+      userId: userId,
+      orderType: itemType,
+      customerName: name,
+      customerEmail: email,
+      totalAmount: price,
+      paymentMethod: paymentMethod,
+      paymentStatus: paymentMethod === "balance" ? "paid" : "pending",
+      status: "pending",
+    };
+
+    // Add type-specific fields
+    if (itemType === "package") {
+      orderData.packageId = (item as any)._id || item.id;
+      if (specialInstructions)
+        orderData.specialInstructions = specialInstructions;
+    } else {
+      orderData.siteId = (item as any)._id || item.id;
+      orderData.targetUrl = targetUrl;
+      orderData.articleTitle = articleTitle;
+      orderData.anchorText = anchorText;
+      if (articleTopic) orderData.articleTopic = articleTopic;
+      if (keywords) orderData.keywords = keywords;
+      if (specialInstructions)
+        orderData.specialInstructions = specialInstructions;
+
+      // Convert files to base64
+      if (uploadedFiles.length > 0) {
+        const filePromises = uploadedFiles.map((file) => {
+          return new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+              resolve({
+                name: file.name,
+                size: file.size,
+                type: file.type,
+                data: reader.result,
+              });
+            };
+            reader.readAsDataURL(file);
+          });
+        });
+        const filesData = await Promise.all(filePromises);
+        orderData.uploadedDocuments = filesData;
+      }
+    }
+    return orderData;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!stripe || !elements) {
-      setError(
-        "Payment form is not ready yet. Please wait a moment and try again."
-      );
-      return;
-    }
-
-    const paymentElement = elements.getElement(PaymentElement);
-    if (!paymentElement || !isPaymentElementReady) {
-      setError(
-        "Payment form is still loading. Please wait a moment and try again."
-      );
-      return;
-    }
 
     setLoading(true);
     setError(null);
 
     try {
-      // Confirm payment
-      const { error: stripeError, paymentIntent } = await stripe.confirmPayment(
-        {
-          elements,
-          confirmParams: {
-            return_url: `${window.location.origin}/checkout/success`,
-          },
-          redirect: "if_required",
-        }
-      );
-
-      if (stripeError) {
-        throw new Error(stripeError.message);
-      }
-
-      if (paymentIntent && paymentIntent.status === "succeeded") {
-        const userId = user?.id || "guest";
-        const price = getPrice();
-
-        // Create order in backend
-        const orderData: any = {
-          userId: userId,
-          orderType: itemType,
-          customerName: name,
-          customerEmail: email,
-          totalAmount: price,
-          stripePaymentIntentId: paymentIntent.id,
-          paymentStatus: "pending",
-          status: "pending",
-        };
-
-        // Add type-specific fields
-        if (itemType === "package") {
-          orderData.packageId = (item as any)._id || item.id;
-          if (specialInstructions)
-            orderData.specialInstructions = specialInstructions;
-        } else {
-          orderData.siteId = (item as any)._id || item.id;
-          orderData.targetUrl = targetUrl;
-          orderData.articleTitle = articleTitle;
-          orderData.anchorText = anchorText;
-          if (articleTopic) orderData.articleTopic = articleTopic;
-          if (keywords) orderData.keywords = keywords;
-          if (specialInstructions)
-            orderData.specialInstructions = specialInstructions;
-
-          // Convert files to base64 for storage
-          if (uploadedFiles.length > 0) {
-            const filePromises = uploadedFiles.map((file) => {
-              return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                  resolve({
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    data: reader.result,
-                  });
-                };
-                reader.readAsDataURL(file);
-              });
-            });
-
-            const filesData = await Promise.all(filePromises);
-            orderData.uploadedDocuments = filesData;
-          }
+      const price = getPrice();
+      
+      // Handle balance payment
+      if (paymentMethod === "balance") {
+        if (userBalance < price) {
+          throw new Error(`Insufficient balance. You have $${userBalance.toFixed(2)}, but need $${price.toFixed(2)}`);
         }
 
-        console.log("[Checkout] Sending order data:", orderData);
+        const orderData = await prepareOrderData();
+        console.log("[Checkout] Creating order with balance payment:", orderData);
         const orderResponse = await apiClient.post("/orders", orderData);
         const order = orderResponse.data.data;
 
-        // Confirm payment in backend (this will update payment status and create invoice)
-        await apiClient.post("/payments/confirm", {
-          paymentIntentId: paymentIntent.id,
+        // Deduct from balance
+        await apiClient.post(`/users/deduct-balance`, {
+          userId: user?.id,
+          amount: price,
         });
 
-        // Redirect to success page
         router.push(`/checkout/success?order=${order._id}`);
+        return;
+      }
+
+      // PayPal payment is handled by PayPal button (see UI below)
+      if (paymentMethod === "paypal") {
+        setError("Please use the PayPal button below to complete payment");
+        setLoading(false);
+        return;
       }
     } catch (err: any) {
       console.error("[v0] Checkout error:", err);
@@ -618,30 +605,97 @@ function CheckoutForm({
       <Separator />
 
       <div className="space-y-4">
-        <h3 className="font-semibold text-lg">Payment Information</h3>
-        <PaymentElement
-          onReady={() => {
-            console.log("[Stripe] PaymentElement ready");
-            setIsPaymentElementReady(true);
-          }}
-          onLoadError={(e: any) => {
-            console.error("[Stripe] PaymentElement load error:", e);
-            const errorMsg = e?.error?.message || e?.message || "Failed to load payment form";
-            console.error("[Stripe] Error details:", JSON.stringify(e, null, 2));
-            setError(
-              `${errorMsg}. Please check your Stripe configuration or refresh and try again.`
-            );
-          }}
-          onChange={(e: any) => {
-            if (e?.error) {
-              console.error("[Stripe] PaymentElement change error:", e.error);
-              setError(e.error.message || "Invalid payment details");
-            } else if (e?.complete) {
-              console.log("[Stripe] Payment details complete");
-              setError(null);
-            }
-          }}
-        />
+        <h3 className="font-semibold text-lg">Payment Method</h3>
+        
+        {/* Payment Method Selection */}
+        <div className="grid grid-cols-2 gap-4">
+          <button
+            type="button"
+            onClick={() => setPaymentMethod("paypal")}
+            className={`p-4 border-2 rounded-lg transition-all ${
+              paymentMethod === "paypal"
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-primary/50"
+            }`}>
+            <div className="text-center">
+              <div className="font-semibold">PayPal</div>
+              <div className="text-sm text-muted-foreground mt-1">
+                Recommended
+              </div>
+            </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setPaymentMethod("balance")}
+            className={`p-4 border-2 rounded-lg transition-all ${
+              paymentMethod === "balance"
+                ? "border-primary bg-primary/5"
+                : "border-border hover:border-primary/50"
+            }`}>
+            <div className="text-center">
+              <div className="font-semibold">Balance</div>
+              <div className="text-sm text-muted-foreground mt-1">
+                ${userBalance.toFixed(2)}
+              </div>
+            </div>
+          </button>
+        </div>
+
+        {paymentMethod === "paypal" && (
+          <div className="mt-6">
+            <h3 className="font-semibold text-lg mb-4">Complete Payment</h3>
+            <PayPalButtons
+              style={{ layout: "vertical", label: "pay" }}
+              disabled={loading}
+              createOrder={async () => {
+                try {
+                  const orderData = await prepareOrderData();
+                  console.log("[PayPal] Creating order:", orderData);
+                  
+                  // Create order in backend first
+                  const orderResponse = await apiClient.post("/orders", orderData);
+                  const order = orderResponse.data.data;
+                  
+                  // Create PayPal order
+                  const paypalResponse = await apiClient.post("/payments/paypal/create-order", {
+                    orderId: order._id,
+                    amount: getPrice(),
+                  });
+                  
+                  return paypalResponse.data.data.orderId;
+                } catch (error: any) {
+                  console.error("[PayPal] Create order error:", error);
+                  setError(error.response?.data?.error || "Failed to create PayPal order");
+                  throw error;
+                }
+              }}
+              onApprove={async (data: any) => {
+                try {
+                  setLoading(true);
+                  // Capture payment
+                  await apiClient.post("/payments/paypal/capture", {
+                    paypalOrderId: data.orderID,
+                  });
+                  
+                  // Redirect to success (order ID is in the PayPal order reference)
+                  router.push(`/checkout/success?paypal=${data.orderID}`);
+                } catch (error: any) {
+                  console.error("[PayPal] Capture error:", error);
+                  setError(error.response?.data?.error || "Payment capture failed");
+                  setLoading(false);
+                }
+              }}
+              onError={(error: any) => {
+                console.error("[PayPal] Error:", error);
+                setError("PayPal payment failed. Please try again.");
+              }}
+              onCancel={() => {
+                setError("Payment cancelled. You can try again when ready.");
+              }}
+            />
+          </div>
+        )}
       </div>
 
       {error && (
@@ -650,20 +704,22 @@ function CheckoutForm({
         </Alert>
       )}
 
-      <Button
-        type="submit"
-        size="lg"
-        className="w-full"
-        disabled={!stripe || loading || !isPaymentElementReady}>
-        {loading ? (
-          <>
-            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            Processing...
-          </>
-        ) : (
-          `Pay $${getPrice()}`
-        )}
-      </Button>
+      {paymentMethod === "balance" && (
+        <Button
+          type="submit"
+          size="lg"
+          className="w-full"
+          disabled={loading}>
+          {loading ? (
+            <>
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              Processing...
+            </>
+          ) : (
+            `Pay $${getPrice()} with Balance`
+          )}
+        </Button>
+      )}
 
       <p className="text-xs text-center text-muted-foreground">
         By completing this purchase, you agree to our Terms of Service and
@@ -680,7 +736,6 @@ function CheckoutContent() {
 
   const [item, setItem] = useState<Site | Package | null>(null);
   const [itemType, setItemType] = useState<"site" | "package">("site");
-  const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -755,22 +810,6 @@ function CheckoutContent() {
 
         setItem(itemData);
         setItemType(type);
-
-        // Create payment intent via backend
-        const response = await apiClient.post("/payments/create-intent", {
-          orderId: (itemData as any)._id || (itemData as any).id, // Use MongoDB _id or mock id
-          amount: price,
-        });
-
-        const secret = response.data.data.clientSecret as string | undefined;
-        if (!secret || !secret.startsWith("pi_")) {
-          throw new Error("Invalid client secret returned by server");
-        }
-        console.log(
-          "[Checkout] clientSecret received:",
-          secret.slice(0, 12) + "…"
-        );
-        setClientSecret(secret);
       } catch (err: any) {
         console.error("[v0] Checkout init error:", err);
         setError(err.message || "Failed to initialize checkout");
@@ -800,13 +839,12 @@ function CheckoutContent() {
     );
   }
 
-  if (!PUBLISHABLE_KEY) {
+  if (!PAYPAL_CLIENT_ID) {
     return (
       <div className="container max-w-2xl py-20">
         <Alert variant="destructive">
           <AlertDescription>
-            Stripe publishable key is not set. Please set
-            NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY and reload.
+            PayPal is not configured. Please set NEXT_PUBLIC_PAYPAL_CLIENT_ID and reload.
           </AlertDescription>
         </Alert>
       </div>
@@ -959,30 +997,17 @@ function CheckoutContent() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              {clientSecret && stripePromise ? (
-                <Elements
-                  key={clientSecret}
-                  stripe={stripePromise}
-                  options={{
-                    clientSecret,
-                    appearance: {
-                      theme: "stripe",
-                      variables: { colorPrimary: "#0f172a" },
-                    },
-                  }}>
-                  <CheckoutForm
-                    item={item}
-                    itemType={itemType}
-                    clientSecret={clientSecret}
-                  />
-                </Elements>
-              ) : (
-                <Alert variant="destructive">
-                  <AlertDescription>
-                    Unable to initialize payment. Please refresh to try again.
-                  </AlertDescription>
-                </Alert>
-              )}
+              <PayPalScriptProvider
+                options={{
+                  clientId: PAYPAL_CLIENT_ID,
+                  currency: "USD",
+                  intent: "capture",
+                }}>
+                <CheckoutForm
+                  item={item}
+                  itemType={itemType}
+                />
+              </PayPalScriptProvider>
             </CardContent>
           </Card>
         </div>

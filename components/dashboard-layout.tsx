@@ -49,9 +49,9 @@ export function DashboardLayout({ children }: { children: React.ReactNode }) {
                   className="w-full justify-start text-gray-700 hover:text-emerald-600 hover:bg-emerald-50"
                   asChild
                 >
-                  <Link href="/dashboard/billing">
+                  <Link href="/dashboard/add-fund">
                     <CreditCard className="mr-2 h-4 w-4" />
-                    Billing
+                    Add Fund
                   </Link>
                 </Button>
                 <Button
