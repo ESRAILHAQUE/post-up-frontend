@@ -704,21 +704,10 @@ function CheckoutForm({
                 disabled={loading || !isFormValid()}
                 createOrder={async () => {
                   try {
-                    const orderData = await prepareOrderData();
-                    console.log("[PayPal] Creating order:", orderData);
-
-                    // Create order in backend first
-                    const orderResponse = await apiClient.post(
-                      "/orders",
-                      orderData
-                    );
-                    const order = orderResponse.data.data;
-
-                    // Create PayPal order
+                    // Only create PayPal order (NOT our backend order yet)
                     const paypalResponse = await apiClient.post(
                       "/payments/paypal/create-order",
                       {
-                        orderId: order._id,
                         amount: getPrice(),
                       }
                     );
@@ -736,17 +725,27 @@ function CheckoutForm({
                 onApprove={async (data: any) => {
                   try {
                     setLoading(true);
-                    // Capture payment
-                    await apiClient.post("/payments/paypal/capture", {
+                    
+                    // First, capture PayPal payment
+                    const captureResponse = await apiClient.post("/payments/paypal/capture", {
                       paypalOrderId: data.orderID,
                     });
 
-                    // Redirect to success (order ID is in the PayPal order reference)
-                    router.push(`/checkout/success?paypal=${data.orderID}`);
+                    // Payment successful, now create our order
+                    const orderData = await prepareOrderData();
+                    orderData.paypalOrderId = data.orderID;
+                    orderData.paymentStatus = "completed";
+                    
+                    console.log("[PayPal] Creating backend order after payment:", orderData);
+                    const orderResponse = await apiClient.post("/orders", orderData);
+                    const order = orderResponse.data.data;
+
+                    // Redirect to success
+                    router.push(`/checkout/success?order=${order._id}`);
                   } catch (error: any) {
-                    console.error("[PayPal] Capture error:", error);
+                    console.error("[PayPal] Approval error:", error);
                     setError(
-                      error.response?.data?.error || "Payment capture failed"
+                      error.response?.data?.error || "Payment processing failed"
                     );
                     setLoading(false);
                   }
