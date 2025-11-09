@@ -462,6 +462,7 @@ export default function NewBlogPostPage() {
                       <h3 className="font-semibold mb-4">Preview:</h3>
                       <div className="prose max-w-none">
                         <div
+                          style={{ whiteSpace: "pre-wrap" }}
                           dangerouslySetInnerHTML={{
                             __html: formData.content || "<p class='text-gray-400'>Nothing to preview yet...</p>",
                           }}
