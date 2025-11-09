@@ -53,7 +53,9 @@ type Package = {
   imageUrl?: string;
 };
 
-const PAYPAL_CLIENT_ID = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || "AUuwKpEu_jMYMh_rSvsd00trldIFK04BqOMq0QZkmTO_GMI1lCF1uevwUD5gUW7Mg6Y0wZag3NSj430j";
+const PAYPAL_CLIENT_ID =
+  process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ||
+  "AUuwKpEu_jMYMh_rSvsd00trldIFK04BqOMq0QZkmTO_GMI1lCF1uevwUD5gUW7Mg6Y0wZag3NSj430j";
 
 if (typeof window !== "undefined") {
   console.log(
@@ -83,14 +85,16 @@ function CheckoutForm({
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "balance">("paypal");
+  const [paymentMethod, setPaymentMethod] = useState<"paypal" | "balance">(
+    "paypal"
+  );
   const [userBalance, setUserBalance] = useState(0);
 
   useEffect(() => {
     if (user) {
       setEmail(user.email);
       setName(user.name || "");
-      
+
       // Fetch user balance
       const fetchBalance = async () => {
         try {
@@ -134,6 +138,18 @@ function CheckoutForm({
 
   const removeFile = (index: number) => {
     setUploadedFiles(uploadedFiles.filter((_, i) => i !== index));
+  };
+
+  const isFormValid = () => {
+    if (!name || !email) return false;
+    
+    if (itemType === "site") {
+      if (!targetUrl || !articleTitle || !anchorText) return false;
+    } else if (itemType === "package") {
+      if (!targetUrl || !articleTitle || !anchorText) return false;
+    }
+    
+    return true;
   };
 
   const prepareOrderData = async () => {
@@ -196,15 +212,22 @@ function CheckoutForm({
 
     try {
       const price = getPrice();
-      
+
       // Handle balance payment
       if (paymentMethod === "balance") {
         if (userBalance < price) {
-          throw new Error(`Insufficient balance. You have $${userBalance.toFixed(2)}, but need $${price.toFixed(2)}`);
+          throw new Error(
+            `Insufficient balance. You have $${userBalance.toFixed(
+              2
+            )}, but need $${price.toFixed(2)}`
+          );
         }
 
         const orderData = await prepareOrderData();
-        console.log("[Checkout] Creating order with balance payment:", orderData);
+        console.log(
+          "[Checkout] Creating order with balance payment:",
+          orderData
+        );
         const orderResponse = await apiClient.post("/orders", orderData);
         const order = orderResponse.data.data;
 
@@ -606,30 +629,45 @@ function CheckoutForm({
 
       <div className="space-y-4">
         <h3 className="font-semibold text-lg">Payment Method</h3>
-        
+
         {/* Payment Method Selection */}
+        {!isFormValid() && (
+          <Alert>
+            <AlertDescription>
+              Please fill in all required fields above to select a payment method.
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <div className="grid grid-cols-2 gap-4">
           <button
             type="button"
             onClick={() => setPaymentMethod("paypal")}
+            disabled={!isFormValid()}
             className={`p-4 border-2 rounded-lg transition-all ${
-              paymentMethod === "paypal"
+              !isFormValid()
+                ? "opacity-50 cursor-not-allowed border-border"
+                : paymentMethod === "paypal"
                 ? "border-primary bg-primary/5"
                 : "border-border hover:border-primary/50"
             }`}>
-            <div className="text-center">
-              <div className="font-semibold">PayPal</div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Recommended
-              </div>
+            <div className="flex items-center justify-center gap-2">
+              <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor">
+                <path d="M20.067 8.478c.492.88.556 2.014.3 3.327-.74 3.806-3.276 5.12-6.514 5.12h-.5a.805.805 0 00-.794.68l-.04.22-.63 3.993-.028.15a.806.806 0 01-.795.68H7.822a.563.563 0 01-.555-.65l1.316-8.347.014-.099a.806.806 0 01.794-.68h1.632c3.238 0 5.774-1.314 6.514-5.12.257-1.313.192-2.447-.3-3.327-.09-.16-.192-.312-.3-.457C18.213 5.894 20.25 7.23 20.067 8.478z" fill="#139AD6"/>
+                <path d="M17.937 7.968c-.09-.16-.192-.312-.3-.457-.975-1.096-2.747-1.556-5.006-1.556h-4.29a.806.806 0 00-.795.68l-1.14 7.229-.033.209a.805.805 0 00.794.68h1.632c3.238 0 5.774-1.314 6.514-5.12.257-1.313.192-2.447-.3-3.327-.09-.16-.192-.312-.3-.457z" fill="#263B80"/>
+              </svg>
+              <span className="font-semibold">PayPal</span>
             </div>
           </button>
 
           <button
             type="button"
             onClick={() => setPaymentMethod("balance")}
+            disabled={!isFormValid()}
             className={`p-4 border-2 rounded-lg transition-all ${
-              paymentMethod === "balance"
+              !isFormValid()
+                ? "opacity-50 cursor-not-allowed border-border"
+                : paymentMethod === "balance"
                 ? "border-primary bg-primary/5"
                 : "border-border hover:border-primary/50"
             }`}>
@@ -642,58 +680,77 @@ function CheckoutForm({
           </button>
         </div>
 
-        {paymentMethod === "paypal" && (
+        {paymentMethod === "paypal" && isFormValid() && (
           <div className="mt-6">
             <h3 className="font-semibold text-lg mb-4">Complete Payment</h3>
-            <PayPalButtons
+            {!PAYPAL_CLIENT_ID ? (
+              <Alert variant="destructive">
+                <AlertDescription>
+                  PayPal is not configured. Please contact support.
+                </AlertDescription>
+              </Alert>
+            ) : (
+              <PayPalButtons
               style={{ layout: "vertical", label: "pay" }}
-              disabled={loading}
-              createOrder={async () => {
-                try {
-                  const orderData = await prepareOrderData();
-                  console.log("[PayPal] Creating order:", orderData);
-                  
-                  // Create order in backend first
-                  const orderResponse = await apiClient.post("/orders", orderData);
-                  const order = orderResponse.data.data;
-                  
-                  // Create PayPal order
-                  const paypalResponse = await apiClient.post("/payments/paypal/create-order", {
-                    orderId: order._id,
-                    amount: getPrice(),
-                  });
-                  
-                  return paypalResponse.data.data.orderId;
-                } catch (error: any) {
-                  console.error("[PayPal] Create order error:", error);
-                  setError(error.response?.data?.error || "Failed to create PayPal order");
-                  throw error;
-                }
-              }}
-              onApprove={async (data: any) => {
-                try {
-                  setLoading(true);
-                  // Capture payment
-                  await apiClient.post("/payments/paypal/capture", {
-                    paypalOrderId: data.orderID,
-                  });
-                  
-                  // Redirect to success (order ID is in the PayPal order reference)
-                  router.push(`/checkout/success?paypal=${data.orderID}`);
-                } catch (error: any) {
-                  console.error("[PayPal] Capture error:", error);
-                  setError(error.response?.data?.error || "Payment capture failed");
-                  setLoading(false);
-                }
-              }}
-              onError={(error: any) => {
-                console.error("[PayPal] Error:", error);
-                setError("PayPal payment failed. Please try again.");
-              }}
-              onCancel={() => {
-                setError("Payment cancelled. You can try again when ready.");
-              }}
-            />
+              disabled={loading || !isFormValid()}
+                createOrder={async () => {
+                  try {
+                    const orderData = await prepareOrderData();
+                    console.log("[PayPal] Creating order:", orderData);
+
+                    // Create order in backend first
+                    const orderResponse = await apiClient.post(
+                      "/orders",
+                      orderData
+                    );
+                    const order = orderResponse.data.data;
+
+                    // Create PayPal order
+                    const paypalResponse = await apiClient.post(
+                      "/payments/paypal/create-order",
+                      {
+                        orderId: order._id,
+                        amount: getPrice(),
+                      }
+                    );
+
+                    return paypalResponse.data.data.orderId;
+                  } catch (error: any) {
+                    console.error("[PayPal] Create order error:", error);
+                    setError(
+                      error.response?.data?.error ||
+                        "Failed to create PayPal order"
+                    );
+                    throw error;
+                  }
+                }}
+                onApprove={async (data: any) => {
+                  try {
+                    setLoading(true);
+                    // Capture payment
+                    await apiClient.post("/payments/paypal/capture", {
+                      paypalOrderId: data.orderID,
+                    });
+
+                    // Redirect to success (order ID is in the PayPal order reference)
+                    router.push(`/checkout/success?paypal=${data.orderID}`);
+                  } catch (error: any) {
+                    console.error("[PayPal] Capture error:", error);
+                    setError(
+                      error.response?.data?.error || "Payment capture failed"
+                    );
+                    setLoading(false);
+                  }
+                }}
+                onError={(error: any) => {
+                  console.error("[PayPal] Error:", error);
+                  setError("PayPal payment failed. Please try again.");
+                }}
+                onCancel={() => {
+                  setError("Payment cancelled. You can try again when ready.");
+                }}
+              />
+            )}
           </div>
         )}
       </div>
@@ -705,11 +762,7 @@ function CheckoutForm({
       )}
 
       {paymentMethod === "balance" && (
-        <Button
-          type="submit"
-          size="lg"
-          className="w-full"
-          disabled={loading}>
+        <Button type="submit" size="lg" className="w-full" disabled={loading || !isFormValid()}>
           {loading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -844,7 +897,8 @@ function CheckoutContent() {
       <div className="container max-w-2xl py-20">
         <Alert variant="destructive">
           <AlertDescription>
-            PayPal is not configured. Please set NEXT_PUBLIC_PAYPAL_CLIENT_ID and reload.
+            PayPal is not configured. Please set NEXT_PUBLIC_PAYPAL_CLIENT_ID
+            and reload.
           </AlertDescription>
         </Alert>
       </div>
@@ -1003,10 +1057,7 @@ function CheckoutContent() {
                   currency: "USD",
                   intent: "capture",
                 }}>
-                <CheckoutForm
-                  item={item}
-                  itemType={itemType}
-                />
+                <CheckoutForm item={item} itemType={itemType} />
               </PayPalScriptProvider>
             </CardContent>
           </Card>
