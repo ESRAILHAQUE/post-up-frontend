@@ -15,17 +15,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Upload, X } from "lucide-react";
+import { ArrowLeft, Upload, X, Bold, Italic, Link as LinkIcon, List, ListOrdered, Heading2 } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api/client";
 import Swal from "sweetalert2";
-import dynamic from "next/dynamic";
-import "react-quill/dist/quill.snow.css";
-
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 export default function NewBlogPostPage() {
   const { user, isLoading } = useAuth();
@@ -46,6 +42,8 @@ export default function NewBlogPostPage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>("");
+  const [showPreview, setShowPreview] = useState(false);
+  const contentRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "admin")) {
@@ -117,26 +115,38 @@ export default function NewBlogPostPage() {
     setFormData((prev) => ({ ...prev, featuredImage: "" }));
   };
 
-  const modules = {
-    toolbar: [
-      [{ header: [1, 2, 3, false] }],
-      ["bold", "italic", "underline", "strike"],
-      [{ list: "ordered" }, { list: "bullet" }],
-      ["link"],
-      ["clean"],
-    ],
+  const insertFormatting = (before: string, after: string = "") => {
+    const textarea = contentRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = formData.content.substring(start, end);
+    const newText =
+      formData.content.substring(0, start) +
+      before +
+      selectedText +
+      after +
+      formData.content.substring(end);
+
+    setFormData({ ...formData, content: newText });
+    
+    // Set cursor position
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + before.length,
+        start + before.length + selectedText.length
+      );
+    }, 0);
   };
 
-  const formats = [
-    "header",
-    "bold",
-    "italic",
-    "underline",
-    "strike",
-    "list",
-    "bullet",
-    "link",
-  ];
+  const insertLink = () => {
+    const url = prompt("Enter URL:");
+    if (!url) return;
+    const text = prompt("Enter link text:") || url;
+    insertFormatting(`<a href="${url}">`, `</a>`);
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -366,22 +376,102 @@ export default function NewBlogPostPage() {
 
                 <div className="md:col-span-2">
                   <Label htmlFor="content">Blog Content *</Label>
-                  <div className="mt-2">
-                    <ReactQuill
-                      theme="snow"
-                      value={formData.content}
-                      onChange={(value) =>
-                        setFormData({ ...formData, content: value })
-                      }
-                      modules={modules}
-                      formats={formats}
-                      placeholder="Write your blog content here... You can add links, format text, and create lists."
-                      className="bg-white"
-                      style={{ height: "400px", marginBottom: "50px" }}
-                    />
+                  
+                  {/* Formatting Toolbar */}
+                  <div className="flex flex-wrap gap-2 mt-2 p-2 bg-gray-50 border rounded-t-lg">
+                    <button
+                      type="button"
+                      onClick={() => insertFormatting("<h2>", "</h2>")}
+                      className="p-2 hover:bg-gray-200 rounded"
+                      title="Heading">
+                      <Heading2 className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertFormatting("<strong>", "</strong>")}
+                      className="p-2 hover:bg-gray-200 rounded"
+                      title="Bold">
+                      <Bold className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertFormatting("<em>", "</em>")}
+                      className="p-2 hover:bg-gray-200 rounded"
+                      title="Italic">
+                      <Italic className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={insertLink}
+                      className="p-2 hover:bg-gray-200 rounded"
+                      title="Insert Link">
+                      <LinkIcon className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertFormatting("<ul>\n  <li>", "</li>\n</ul>")}
+                      className="p-2 hover:bg-gray-200 rounded"
+                      title="Bullet List">
+                      <List className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertFormatting("<ol>\n  <li>", "</li>\n</ol>")}
+                      className="p-2 hover:bg-gray-200 rounded"
+                      title="Numbered List">
+                      <ListOrdered className="h-4 w-4" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => insertFormatting("<p>", "</p>")}
+                      className="px-3 py-2 hover:bg-gray-200 rounded text-sm"
+                      title="Paragraph">
+                      P
+                    </button>
                   </div>
-                  <p className="text-sm text-gray-500 mt-12">
-                    Use the toolbar to format text and add links. For images, paste the URL in the content or use the featured image above.
+
+                  {/* Content Textarea */}
+                  <Textarea
+                    ref={contentRef}
+                    id="content"
+                    value={formData.content}
+                    onChange={(e) =>
+                      setFormData({ ...formData, content: e.target.value })
+                    }
+                    required
+                    rows={15}
+                    placeholder="Write your blog content here... Select text and use buttons above to format."
+                    className="rounded-t-none font-mono text-sm"
+                  />
+
+                  {/* Preview Toggle */}
+                  <div className="flex items-center gap-2 mt-3">
+                    <input
+                      id="togglePreview"
+                      type="checkbox"
+                      className="h-4 w-4"
+                      checked={showPreview}
+                      onChange={(e) => setShowPreview(e.target.checked)}
+                    />
+                    <Label htmlFor="togglePreview">Show Preview</Label>
+                  </div>
+
+                  {/* Live Preview */}
+                  {showPreview && (
+                    <div className="mt-4 rounded-lg border p-6 bg-white">
+                      <h3 className="font-semibold mb-4">Preview:</h3>
+                      <div className="prose max-w-none">
+                        <div
+                          dangerouslySetInnerHTML={{
+                            __html: formData.content || "<p class='text-gray-400'>Nothing to preview yet...</p>",
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <p className="text-sm text-gray-500 mt-2">
+                    💡 Tip: Select text and click formatting buttons. You can paste image URLs directly in the content.
                   </p>
                 </div>
 
