@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
   SelectContent,
@@ -15,13 +14,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useRouter } from "next/navigation";
 import apiClient from "@/lib/api/client";
 import Swal from "sweetalert2";
+import dynamic from "next/dynamic";
+import "react-quill/dist/quill.snow.css";
+
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 
 export default function NewBlogPostPage() {
   const { user, isLoading } = useAuth();
@@ -39,7 +42,9 @@ export default function NewBlogPostPage() {
     isPublished: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPreview, setShowPreview] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
 
   useEffect(() => {
     if (!isLoading && (!user || user.role !== "admin")) {
@@ -71,11 +76,98 @@ export default function NewBlogPostPage() {
     }));
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      Swal.fire({
+        icon: "error",
+        title: "File too large",
+        text: "Please select an image smaller than 5MB",
+      });
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith("image/")) {
+      Swal.fire({
+        icon: "error",
+        title: "Invalid file type",
+        text: "Please select an image file",
+      });
+      return;
+    }
+
+    setImageFile(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setImagePreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview("");
+    setFormData((prev) => ({ ...prev, featuredImage: "" }));
+  };
+
+  const modules = {
+    toolbar: [
+      [{ header: [1, 2, 3, false] }],
+      ["bold", "italic", "underline", "strike"],
+      [{ list: "ordered" }, { list: "bullet" }],
+      ["link"],
+      ["clean"],
+    ],
+  };
+
+  const formats = [
+    "header",
+    "bold",
+    "italic",
+    "underline",
+    "strike",
+    "list",
+    "bullet",
+    "link",
+  ];
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     try {
+      let featuredImageUrl = formData.featuredImage;
+
+      // Upload image if selected
+      if (imageFile) {
+        setUploadingImage(true);
+        const reader = new FileReader();
+        reader.readAsDataURL(imageFile);
+        
+        await new Promise((resolve) => {
+          reader.onloadend = async () => {
+            try {
+              const uploadResponse = await apiClient.post("/blog/upload-image", {
+                image: reader.result,
+                fileName: imageFile.name,
+              });
+              featuredImageUrl = uploadResponse.data.data.url;
+              resolve(null);
+            } catch (err) {
+              console.error("Image upload error:", err);
+              resolve(null);
+            }
+          };
+        });
+        setUploadingImage(false);
+      }
+
       const tagsArray = formData.tags
         .split(",")
         .map((tag) => tag.trim())
@@ -83,6 +175,7 @@ export default function NewBlogPostPage() {
 
       const postData = {
         ...formData,
+        featuredImage: featuredImageUrl,
         tags: tagsArray,
       };
 
@@ -174,18 +267,62 @@ export default function NewBlogPostPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label htmlFor="featuredImage">Featured Image URL</Label>
-                  <Input
-                    id="featuredImage"
-                    value={formData.featuredImage}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        featuredImage: e.target.value,
-                      })
-                    }
-                    placeholder="https://example.com/image.jpg"
-                  />
+                  <Label htmlFor="featuredImage">Featured Image *</Label>
+                  <div className="space-y-4">
+                    {/* Image Preview */}
+                    {(imagePreview || formData.featuredImage) && (
+                      <div className="relative inline-block">
+                        <img
+                          src={imagePreview || formData.featuredImage}
+                          alt="Featured"
+                          className="w-full max-w-md h-48 object-cover rounded-lg border"
+                        />
+                        <button
+                          type="button"
+                          onClick={removeImage}
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Upload Button */}
+                    {!imagePreview && !formData.featuredImage && (
+                      <div>
+                        <label
+                          htmlFor="imageUpload"
+                          className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg cursor-pointer hover:bg-primary/90"
+                        >
+                          <Upload className="h-4 w-4" />
+                          Upload Image
+                        </label>
+                        <input
+                          id="imageUpload"
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="hidden"
+                        />
+                        <p className="text-sm text-gray-500 mt-2">
+                          Or paste image URL below (Max 5MB)
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Manual URL Input */}
+                    <Input
+                      id="featuredImage"
+                      value={formData.featuredImage}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          featuredImage: e.target.value,
+                        })
+                      }
+                      placeholder="Or paste image URL: https://example.com/image.jpg"
+                    />
+                  </div>
                 </div>
 
                 <div>
@@ -227,43 +364,24 @@ export default function NewBlogPostPage() {
                 </div>
 
                 <div className="md:col-span-2">
-                  <Label htmlFor="content">Content (HTML) *</Label>
-                  <Textarea
-                    id="content"
-                    value={formData.content}
-                    onChange={(e) =>
-                      setFormData({ ...formData, content: e.target.value })
-                    }
-                    required
-                    rows={12}
-                    placeholder="<h2>Heading</h2><p>Your content here...</p>"
-                    className="font-mono text-sm"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    Use HTML tags for formatting
-                  </p>
-                  <div className="flex items-center gap-2 mt-3">
-                    <input
-                      id="togglePreview"
-                      type="checkbox"
-                      className="h-4 w-4"
-                      checked={showPreview}
-                      onChange={(e) => setShowPreview(e.target.checked)}
+                  <Label htmlFor="content">Blog Content *</Label>
+                  <div className="mt-2">
+                    <ReactQuill
+                      theme="snow"
+                      value={formData.content}
+                      onChange={(value) =>
+                        setFormData({ ...formData, content: value })
+                      }
+                      modules={modules}
+                      formats={formats}
+                      placeholder="Write your blog content here... You can add links, format text, and create lists."
+                      className="bg-white"
+                      style={{ height: "400px", marginBottom: "50px" }}
                     />
-                    <Label htmlFor="togglePreview">Live Preview</Label>
                   </div>
-                  {showPreview && (
-                    <div className="mt-4 rounded-lg border p-4 bg-white">
-                      <div className="prose max-w-none">
-                        <div
-                          // Rendering trusted admin-provided HTML
-                          dangerouslySetInnerHTML={{
-                            __html: formData.content || "<p class=\"text-gray-500\">Nothing to preview</p>",
-                          }}
-                        />
-                      </div>
-                    </div>
-                  )}
+                  <p className="text-sm text-gray-500 mt-12">
+                    Use the toolbar to format text and add links. For images, paste the URL in the content or use the featured image above.
+                  </p>
                 </div>
 
                 <div>
@@ -302,9 +420,13 @@ export default function NewBlogPostPage() {
               <div className="flex gap-4 pt-4">
                 <Button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || uploadingImage}
                   className="bg-emerald-600 hover:bg-emerald-700">
-                  {isSubmitting ? "Creating..." : "Create Blog Post"}
+                  {uploadingImage
+                    ? "Uploading Image..."
+                    : isSubmitting
+                    ? "Creating..."
+                    : "Create Blog Post"}
                 </Button>
                 <Button type="button" variant="outline" asChild>
                   <Link href="/admin/blog">Cancel</Link>
