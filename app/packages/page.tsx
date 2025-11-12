@@ -200,7 +200,7 @@ export default function PackagesPage() {
     searchQuery ||
     selectedCategories.length > 0 ||
     priceRange[0] > 0 ||
-    priceRange[1] < 5000;
+    priceRange[1] < 15000;
 
   return (
     <div className="flex flex-col min-h-screen bg-white">

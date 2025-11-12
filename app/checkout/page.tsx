@@ -725,19 +725,28 @@ function CheckoutForm({
                 onApprove={async (data: any) => {
                   try {
                     setLoading(true);
-                    
+
                     // First, capture PayPal payment
-                    const captureResponse = await apiClient.post("/payments/paypal/capture", {
-                      paypalOrderId: data.orderID,
-                    });
+                    const captureResponse = await apiClient.post(
+                      "/payments/paypal/capture",
+                      {
+                        paypalOrderId: data.orderID,
+                      }
+                    );
 
                     // Payment successful, now create our order
                     const orderData = await prepareOrderData();
                     orderData.paypalOrderId = data.orderID;
                     orderData.paymentStatus = "completed";
-                    
-                    console.log("[PayPal] Creating backend order after payment:", orderData);
-                    const orderResponse = await apiClient.post("/orders", orderData);
+
+                    console.log(
+                      "[PayPal] Creating backend order after payment:",
+                      orderData
+                    );
+                    const orderResponse = await apiClient.post(
+                      "/orders",
+                      orderData
+                    );
                     const order = orderResponse.data.data;
 
                     // Redirect to success
