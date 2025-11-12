@@ -48,7 +48,7 @@ export default function PackagesPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [priceRange, setPriceRange] = useState([0, 15000]);
+  const [priceRange, setPriceRange] = useState([0, 25000]);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
     new Set()
   );
@@ -90,26 +90,26 @@ export default function PackagesPage() {
     }
     try {
       console.log("[Packages] Fetching packages from backend...");
-      const response = await apiClient.get("/packages");
+      const response = await apiClient.get("/packages/active");
       console.log("[Packages] API Response:", response.data);
       console.log("[Packages] Packages data:", response.data.data);
 
-      // Handle the correct API response structure: response.data.data.packages
-      const packagesData = response.data.data?.packages || [];
+      // Handle the correct API response structure for /active endpoint
+      const packagesData = Array.isArray(response.data.data) 
+        ? response.data.data 
+        : response.data.data?.packages || [];
 
-      const activePackages = packagesData
-        .filter((pkg: any) => pkg.isActive)
-        .map((pkg: any) => ({
-          _id: pkg._id,
-          name: pkg.name,
-          description: pkg.description,
-          price: pkg.price,
-          discounted_price: pkg.discounted_price,
-          features: pkg.features,
-          category: pkg.category,
-          isActive: pkg.isActive,
-          imageUrl: pkg.imageUrl,
-        }));
+      const activePackages = packagesData.map((pkg: any) => ({
+        _id: pkg._id,
+        name: pkg.name,
+        description: pkg.description,
+        price: pkg.price,
+        discounted_price: pkg.discounted_price,
+        features: pkg.features,
+        category: pkg.category,
+        isActive: pkg.isActive,
+        imageUrl: pkg.imageUrl,
+      }));
 
       console.log("[Packages] Fetched packages:", activePackages.length);
       console.log("[Packages] Active packages details:", activePackages);
@@ -200,7 +200,7 @@ export default function PackagesPage() {
     searchQuery ||
     selectedCategories.length > 0 ||
     priceRange[0] > 0 ||
-    priceRange[1] < 15000;
+    priceRange[1] < 25000;
 
   return (
     <div className="flex flex-col min-h-screen bg-white">
@@ -286,7 +286,7 @@ export default function PackagesPage() {
                         value={priceRange}
                         onValueChange={setPriceRange}
                         min={0}
-                        max={15000}
+                        max={25000}
                         step={100}
                         className="[&_[role=slider]]:bg-emerald-600 [&_[role=slider]]:border-emerald-600"
                       />
