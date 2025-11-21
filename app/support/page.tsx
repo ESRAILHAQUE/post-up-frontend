@@ -434,7 +434,7 @@ export default function SupportPage() {
                       <div>
                         <p className="text-sm font-medium mb-1">Phone</p>
                         <p className="text-sm text-muted-foreground">
-                          +1 (555) 123-4567
+                          +1 (307) 310-4573
                         </p>
                       </div>
                     </div>
