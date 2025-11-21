@@ -251,7 +251,7 @@ export default function SupportPage() {
               </CardHeader>
               <CardContent>
                 <Button variant="outline" className="w-full bg-transparent">
-                  +1 (555) 123-4567
+                  +1 (307) 310-4573
                 </Button>
                 <p className="text-xs text-muted-foreground mt-2">
                   Mon-Fri, 9am-6pm EST
