@@ -235,18 +235,18 @@ export default function ServicesPage() {
                 const Icon = step.icon;
                 return (
                   <Card key={step.number} className="text-center">
-                    <CardHeader>
-                      <div className="flex flex-col items-center gap-4">
-                        <div className="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xl font-bold">
+                    <CardHeader className="pb-3">
+                      <div className="flex flex-col items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center text-lg font-bold">
                           {step.number}
                         </div>
-                        <div className="p-3 bg-emerald-100 rounded-lg inline-flex">
-                          <Icon className="h-6 w-6 text-emerald-600" />
+                        <div className="p-2 bg-emerald-100 rounded-lg inline-flex">
+                          <Icon className="h-5 w-5 text-emerald-600" />
                         </div>
-                        <CardTitle className="text-xl">{step.title}</CardTitle>
+                        <CardTitle className="text-lg">{step.title}</CardTitle>
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent className="pt-0">
                       <p className="text-sm text-muted-foreground">
                         {step.description}
                       </p>
