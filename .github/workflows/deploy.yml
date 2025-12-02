@@ -1,41 +1,62 @@
-name: Deploy Frontend to VPS
+name: Deploy to VPS
 
 on:
   push:
     branches:
       - main
+      - master
+  workflow_dispatch:
 
 jobs:
   deploy:
+    name: Deploy Frontend to VPS
     runs-on: ubuntu-latest
-
+    
     steps:
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm install --legacy-peer-deps
+        run: npm ci
 
-      - name: Build project
-        run: npm run build
+      - name: Build frontend
         env:
           NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+        run: npm run build
 
       - name: Deploy to VPS
-        uses: appleboy/ssh-action@master
+        uses: appleboy/scp-action@v0.1.7
         with:
           host: ${{ secrets.VPS_HOST }}
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
-          port: ${{ secrets.VPS_PORT }}
+          port: ${{ secrets.VPS_PORT || 22 }}
+          source: ".next,public,package.json,package-lock.json,next.config.mjs"
+          target: "/var/www/guestpostup/frontend"
+          strip_components: 0
+          rm: false
+
+      - name: SSH and restart frontend
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USERNAME }}
+          key: ${{ secrets.VPS_SSH_KEY }}
+          port: ${{ secrets.VPS_PORT || 22 }}
           script: |
             cd /var/www/guestpostup/frontend
-            git pull origin main
-            npm install --legacy-peer-deps
-            npm run build
-            pm2 restart guestpostup-frontend
+            npm ci --production
+            if pm2 list | grep -q "guestpostup-frontend"; then
+              pm2 restart guestpostup-frontend
+            else
+              PORT=3000 pm2 start npm --name guestpostup-frontend -- start
+              pm2 save
+            fi
+            pm2 logs guestpostup-frontend --lines 20
