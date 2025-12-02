@@ -133,7 +133,7 @@ export default function ServicesPage() {
         </section>
 
         {/* What's Included Section */}
-        <section className="py-16 bg-background">
+        <section className="py-10 bg-background">
           <div className="container max-w-4xl">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">
               What's Included
@@ -149,7 +149,7 @@ export default function ServicesPage() {
         </section>
 
         {/* Why It Matters Section */}
-        <section className="py-16 bg-muted/50">
+        <section className="py-10 bg-muted/50">
           <div className="container max-w-4xl">
             <h2 className="text-3xl font-bold text-slate-900 mb-4">
               Why It Matters
@@ -166,7 +166,7 @@ export default function ServicesPage() {
         </section>
 
         {/* Key Benefits Section */}
-        <section className="py-16 bg-background">
+        <section className="py-10 bg-background">
           <div className="container max-w-6xl">
             <h2 className="text-3xl font-bold text-slate-900 mb-8">
               Key Benefits
@@ -225,7 +225,7 @@ export default function ServicesPage() {
         </section>
 
         {/* Process Steps Section */}
-        <section className="py-16 bg-muted/50">
+        <section className="py-10 bg-muted/50">
           <div className="container max-w-6xl">
             <h2 className="text-3xl font-bold text-slate-900 mb-12 text-center">
               Our Guest Posting Process
@@ -259,7 +259,7 @@ export default function ServicesPage() {
         </section>
 
         {/* Pricing Plans Section */}
-        <section className="py-20 bg-background">
+        <section className="py-12 bg-background">
           <div className="container max-w-6xl">
             <div className="text-center mb-12">
               <h2 className="text-3xl font-bold text-slate-900 mb-4">
