@@ -13,112 +13,105 @@ import {
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import {
-  FileText,
-  Link2,
-  TrendingUp,
-  Globe,
   CheckCircle2,
   ArrowRight,
-  Star,
-  Users,
-  Zap,
-  Shield,
+  Search,
+  FileText,
+  PenTool,
+  Sparkles,
+  FileCheck,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function ServicesPage() {
-  const services = [
+  const router = useRouter();
+
+  const pricingPlans = [
     {
-      id: "guest-posts",
-      title: "Premium Guest Posts",
-      description:
-        "Get published on high-authority websites with proven domain authority and engaged audiences. Our curated network ensures quality backlinks that boost your SEO rankings.",
-      icon: FileText,
+      id: "starter",
+      name: "Starter Package",
+      price: 297,
+      originalPrice: 497,
+      quantity: "5 Guest Posts",
       features: [
-        "DA 30+ verified websites",
-        "Dofollow backlinks",
-        "Fast turnaround (5-7 days)",
+        "5 High-Quality Guest Posts",
+        "DA 40-50 websites",
+        "Basic SEO optimization",
+        "1 revision per article",
+        "7-10 day delivery",
+        "General topics",
+      ],
+      popular: false,
+      packageId: "starter-growth-package", // This will be used for checkout
+    },
+    {
+      id: "professional",
+      name: "Professional Package",
+      price: 697,
+      originalPrice: 997,
+      quantity: "15 Guest Posts",
+      features: [
+        "15 Premium Guest Posts",
+        "DA 50-60 websites",
+        "Advanced SEO optimization",
+        "2 revisions per article",
+        "5-7 day delivery",
+        "Industry-specific content",
         "Content review included",
-        "Permanent placements",
-        "Real traffic sites",
       ],
       popular: true,
+      packageId: "professional-growth-package",
     },
     {
-      id: "link-insertions",
-      title: "Link Insertions",
-      description:
-        "Insert your backlinks into existing high-quality articles on authoritative sites. Quick and effective way to build quality backlinks without creating new content.",
-      icon: Link2,
+      id: "enterprise",
+      name: "Enterprise Package",
+      price: 1497,
+      originalPrice: 2497,
+      quantity: "30 Guest Posts",
       features: [
-        "Existing high-DA articles",
-        "Contextual placements",
-        "3-5 day turnaround",
-        "Dofollow links",
-        "Traffic-rich pages",
-        "Affordable pricing",
+        "30 Premium Guest Posts",
+        "DA 60-70+ websites",
+        "Premium SEO optimization",
+        "Unlimited revisions",
+        "3-5 day delivery",
+        "Content strategy consultation",
+        "Priority support",
       ],
       popular: false,
-    },
-    {
-      id: "seo-packages",
-      title: "SEO Growth Packages",
-      description:
-        "Comprehensive SEO packages designed to accelerate your business growth. Multiple guest posts with strategic placement for maximum impact.",
-      icon: TrendingUp,
-      features: [
-        "Multiple guest posts",
-        "Strategic niche targeting",
-        "Performance tracking",
-        "Dedicated support",
-        "Custom strategies",
-        "Scalable solutions",
-      ],
-      popular: false,
-    },
-    {
-      id: "content-syndication",
-      title: "Content Syndication",
-      description:
-        "Amplify your existing content by syndicating it across multiple high-authority platforms. Maximize reach and build diverse backlink profiles.",
-      icon: Globe,
-      features: [
-        "Multi-platform distribution",
-        "Brand visibility boost",
-        "Diverse backlink sources",
-        "Content amplification",
-        "Wide audience reach",
-        "SEO diversification",
-      ],
-      popular: false,
+      packageId: "enterprise-growth-package",
     },
   ];
 
-  const benefits = [
+  const processSteps = [
     {
-      icon: Shield,
-      title: "Verified Quality",
-      description:
-        "Every site is manually vetted for domain authority, traffic quality, and editorial standards.",
+      number: 1,
+      title: "Research",
+      description: "In-depth keyword & topic research",
+      icon: Search,
     },
     {
-      icon: Zap,
-      title: "Fast Turnaround",
-      description:
-        "Most posts go live within 5-7 days. Track progress in real-time through your dashboard.",
+      number: 2,
+      title: "Outline",
+      description: "Strategic content structure",
+      icon: FileText,
     },
     {
-      icon: TrendingUp,
-      title: "Real Results",
-      description:
-        "Build high-quality backlinks that actually improve your search rankings and drive traffic.",
+      number: 3,
+      title: "Write",
+      description: "In-depth content creation",
+      icon: PenTool,
     },
     {
-      icon: Users,
-      title: "Expert Support",
-      description:
-        "Our team works with publishers to ensure your content meets quality standards and gets published.",
+      number: 4,
+      title: "Optimize",
+      description: "SEO & quality review",
+      icon: Sparkles,
     },
   ];
+
+  const handleOrderNow = (packageId: string) => {
+    router.push(`/checkout?package=${packageId}`);
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -129,76 +122,143 @@ export default function ServicesPage() {
         <section className="bg-gradient-to-b from-emerald-50 to-background py-20">
           <div className="container">
             <div className="max-w-3xl mx-auto text-center space-y-6">
-              <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
-                Our Services
-              </Badge>
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight">
+              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
                 Premium Guest Posting Services
               </h1>
-              <p className="text-xl text-muted-foreground">
-                Boost your SEO rankings with high-quality guest posts on
-                verified, high-authority websites. Get published on sites that
-                drive real traffic and build lasting backlinks.
+              <p className="text-xl text-slate-600">
+                High-quality, SEO-optimized guest posts that rank and convert.
+                Get published on verified high-authority websites.
               </p>
+              <Button
+                size="lg"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                onClick={() => router.push("/marketplace")}
+              >
+                Get Started
+              </Button>
             </div>
           </div>
         </section>
 
-        {/* Services Grid */}
-        <section className="py-20 bg-background">
-          <div className="container">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-6xl mx-auto">
-              {services.map((service) => {
-                const Icon = service.icon;
+        {/* What's Included Section */}
+        <section className="py-16 bg-background">
+          <div className="container max-w-4xl">
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">
+              What's Included
+            </h2>
+            <p className="text-lg text-slate-600 leading-relaxed">
+              Our expert team crafts compelling, keyword-optimized guest posts
+              that improve your search rankings while engaging your audience.
+              Each article undergoes rigorous research, strategic keyword
+              placement, and SEO best practices to ensure maximum visibility and
+              permanent backlinks on high-authority websites.
+            </p>
+          </div>
+        </section>
+
+        {/* Why It Matters Section */}
+        <section className="py-16 bg-muted/50">
+          <div className="container max-w-4xl">
+            <h2 className="text-3xl font-bold text-slate-900 mb-4">
+              Why It Matters
+            </h2>
+            <p className="text-lg text-slate-600 leading-relaxed">
+              Quality guest posting is the foundation of successful SEO. Search
+              engines reward websites with valuable, original content from
+              authoritative sources, and it keeps your audience coming back.
+              Fresh, well-researched guest posts establish authority in your
+              niche by establishing yourself as a thought leader and driving
+              organic traffic through high-quality backlinks.
+            </p>
+          </div>
+        </section>
+
+        {/* Key Benefits Section */}
+        <section className="py-16 bg-background">
+          <div className="container max-w-6xl">
+            <h2 className="text-3xl font-bold text-slate-900 mb-8">
+              Key Benefits
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    Improved search rankings & keyword research
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    Increased organic traffic and visibility
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    Higher audience engagement and time-on-page
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    Established industry authority
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    Long-term SEO benefits
+                  </p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
+                <div>
+                  <p className="font-semibold text-slate-900">
+                    Professional quality guaranteed
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Process Steps Section */}
+        <section className="py-16 bg-muted/50">
+          <div className="container max-w-6xl">
+            <h2 className="text-3xl font-bold text-slate-900 mb-12 text-center">
+              Our Guest Posting Process
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {processSteps.map((step) => {
+                const Icon = step.icon;
                 return (
-                  <Card
-                    key={service.id}
-                    className={`flex flex-col hover:shadow-lg transition-all ${
-                      service.popular
-                        ? "border-2 border-emerald-500 relative"
-                        : ""
-                    }`}
-                  >
-                    {service.popular && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                        <Badge className="bg-emerald-500 text-white px-4 py-1">
-                          Most Popular
-                        </Badge>
-                      </div>
-                    )}
-                    <CardHeader className={service.popular ? "pt-6" : ""}>
-                      <div className="flex items-center gap-3 mb-4">
-                        <div className="p-3 bg-emerald-100 rounded-lg">
+                  <Card key={step.number} className="text-center">
+                    <CardHeader>
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-emerald-600 text-white flex items-center justify-center text-xl font-bold">
+                          {step.number}
+                        </div>
+                        <div className="p-3 bg-emerald-100 rounded-lg inline-flex">
                           <Icon className="h-6 w-6 text-emerald-600" />
                         </div>
-                        <CardTitle className="text-2xl">
-                          {service.title}
-                        </CardTitle>
+                        <CardTitle className="text-xl">{step.title}</CardTitle>
                       </div>
-                      <CardDescription className="text-base">
-                        {service.description}
-                      </CardDescription>
                     </CardHeader>
-                    <CardContent className="flex-1 space-y-4">
-                      <div className="space-y-3">
-                        {service.features.map((feature, index) => (
-                          <div key={index} className="flex items-start gap-2">
-                            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                            <span className="text-sm">{feature}</span>
-                          </div>
-                        ))}
-                      </div>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        {step.description}
+                      </p>
                     </CardContent>
-                    <div className="p-6 pt-0">
-                      <Button
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                        asChild
-                      >
-                        <Link href="/marketplace">
-                          View Options <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                      </Button>
-                    </div>
                   </Card>
                 );
               })}
@@ -206,85 +266,102 @@ export default function ServicesPage() {
           </div>
         </section>
 
-        {/* Benefits Section */}
-        <section className="py-20 bg-muted/50">
-          <div className="container">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">
-                Why Choose Our Services?
-              </h2>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                We provide the most trusted guest posting service for serious
-                marketers looking to build quality backlinks.
-              </p>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-6xl mx-auto">
-              {benefits.map((benefit, index) => {
-                const Icon = benefit.icon;
-                return (
-                  <div key={index} className="text-center space-y-4">
-                    <div className="inline-flex p-4 bg-emerald-100 rounded-full">
-                      <Icon className="h-8 w-8 text-emerald-600" />
-                    </div>
-                    <h3 className="text-xl font-semibold">{benefit.title}</h3>
-                    <p className="text-muted-foreground">
-                      {benefit.description}
-                    </p>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        {/* Stats Section */}
+        {/* Pricing Plans Section */}
         <section className="py-20 bg-background">
-          <div className="container">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-              <div className="text-center space-y-2">
-                <div className="text-4xl font-bold text-emerald-600">500+</div>
-                <div className="text-muted-foreground">
-                  Trusted Businesses
-                </div>
-              </div>
-              <div className="text-center space-y-2">
-                <div className="text-4xl font-bold text-emerald-600">85+</div>
-                <div className="text-muted-foreground">Average DA Score</div>
-              </div>
-              <div className="text-center space-y-2">
-                <div className="text-4xl font-bold text-emerald-600">5-7</div>
-                <div className="text-muted-foreground">Days Turnaround</div>
-              </div>
+          <div className="container max-w-6xl">
+            <div className="text-center mb-12">
+              <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                Pricing Plans
+              </h2>
+              <p className="text-lg text-slate-600">
+                Choose the perfect package for your content needs.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              {pricingPlans.map((plan) => (
+                <Card
+                  key={plan.id}
+                  className={`flex flex-col ${
+                    plan.popular
+                      ? "border-2 border-emerald-500 relative shadow-lg"
+                      : ""
+                  }`}
+                >
+                  {plan.popular && (
+                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                      <Badge className="bg-emerald-500 text-white px-4 py-1">
+                        Most Popular
+                      </Badge>
+                    </div>
+                  )}
+                  <CardHeader className={plan.popular ? "pt-6" : ""}>
+                    <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
+                    <div className="space-y-2">
+                      <div className="flex items-baseline gap-2">
+                        <span className="text-3xl font-bold text-slate-400 line-through">
+                          ${plan.originalPrice}
+                        </span>
+                        <span className="text-4xl font-bold text-emerald-600">
+                          ${plan.price}
+                        </span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {plan.quantity}
+                      </p>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="flex-1 space-y-4">
+                    <div className="space-y-3">
+                      {plan.features.map((feature, index) => (
+                        <div key={index} className="flex items-start gap-2">
+                          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                          <span className="text-sm">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                  <div className="p-6 pt-0">
+                    <Button
+                      className={`w-full ${
+                        plan.popular
+                          ? "bg-emerald-600 hover:bg-emerald-700"
+                          : "bg-emerald-600 hover:bg-emerald-700"
+                      } text-white`}
+                      onClick={() => handleOrderNow(plan.packageId)}
+                    >
+                      Order Now
+                    </Button>
+                  </div>
+                </Card>
+              ))}
             </div>
           </div>
         </section>
 
-        {/* CTA Section */}
-        <section className="py-20 bg-gradient-to-b from-background to-emerald-50">
-          <div className="container">
-            <div className="max-w-3xl mx-auto text-center space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold">
-                Ready to Boost Your SEO?
+        {/* Custom Package Section */}
+        <section className="py-20 bg-gradient-to-r from-emerald-600 to-emerald-700">
+          <div className="container max-w-4xl">
+            <div className="text-center space-y-6">
+              <h2 className="text-3xl md:text-4xl font-bold text-white">
+                Need a Custom Package?
               </h2>
-              <p className="text-lg text-muted-foreground">
-                Start building high-quality backlinks today and watch your
-                rankings soar. Browse our marketplace of verified sites.
+              <p className="text-lg text-emerald-50">
+                Looking for something specific? We create tailored SEO solutions
+                based on your project requirements and goals. Contact us for a
+                personalized quote.
               </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button
-                  size="lg"
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                  asChild
-                >
-                  <Link href="/marketplace">
-                    Browse Marketplace <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-                <Button size="lg" variant="outline" asChild>
-                  <Link href="/contact">Contact Sales</Link>
-                </Button>
-              </div>
+              <Button
+                size="lg"
+                variant="outline"
+                className="bg-white text-emerald-600 hover:bg-emerald-50 border-white"
+                asChild
+              >
+                <Link href="/contact">
+                  <FileCheck className="mr-2 h-5 w-5" />
+                  Get Custom Quote
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
@@ -294,4 +371,3 @@ export default function ServicesPage() {
     </div>
   );
 }
-
