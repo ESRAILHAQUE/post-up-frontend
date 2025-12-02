@@ -429,7 +429,7 @@ export default function HomePage() {
               <CardFooter>
                 <Button 
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={() => router.push("/marketplace")}
+                  onClick={() => router.push("/services")}
                 >
                   Buy Now
                 </Button>
@@ -506,7 +506,7 @@ export default function HomePage() {
               <CardFooter>
                 <Button 
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={() => router.push("/marketplace")}
+                  onClick={() => router.push("/services")}
                 >
                   Buy Now
                 </Button>
@@ -582,7 +582,7 @@ export default function HomePage() {
               <CardFooter>
                 <Button 
                   className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={() => router.push("/marketplace")}
+                  onClick={() => router.push("/services")}
                 >
                   Buy Now
                 </Button>
