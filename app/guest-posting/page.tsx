@@ -15,10 +15,6 @@ import Link from "next/link";
 import {
   CheckCircle2,
   ArrowRight,
-  Search,
-  FileText,
-  PenTool,
-  Sparkles,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -232,22 +228,20 @@ export default function ServicesPage() {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
               {processSteps.map((step) => {
-                const Icon = step.icon;
                 return (
-                  <Card key={step.number} className="text-center">
-                    <CardHeader className="pb-3">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-600 text-white flex items-center justify-center text-lg font-bold">
+                  <Card key={step.number} className="text-center border-slate-200 shadow-sm">
+                    <CardHeader className="pb-4">
+                      <div className="flex flex-col items-center gap-4">
+                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center text-xl font-bold shadow-md">
                           {step.number}
                         </div>
-                        <div className="p-2 bg-emerald-100 rounded-lg inline-flex">
-                          <Icon className="h-5 w-5 text-emerald-600" />
-                        </div>
-                        <CardTitle className="text-lg">{step.title}</CardTitle>
+                        <CardTitle className="text-lg font-semibold text-slate-900">
+                          {step.title}
+                        </CardTitle>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-0">
-                      <p className="text-sm text-muted-foreground">
+                    <CardContent className="pt-0 pb-6">
+                      <p className="text-sm text-slate-600 leading-relaxed">
                         {step.description}
                       </p>
                     </CardContent>
