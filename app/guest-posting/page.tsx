@@ -82,25 +82,21 @@ export default function ServicesPage() {
       number: 1,
       title: "Research",
       description: "In-depth keyword & topic research",
-      icon: Search,
     },
     {
       number: 2,
       title: "Outline",
       description: "Strategic content structure",
-      icon: FileText,
     },
     {
       number: 3,
       title: "Write",
-      description: "In-depth content creation",
-      icon: PenTool,
+      description: "Expert content creation",
     },
     {
       number: 4,
       title: "Optimize",
       description: "SEO & quality review",
-      icon: Sparkles,
     },
   ];
 
