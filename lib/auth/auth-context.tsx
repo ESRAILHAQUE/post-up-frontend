@@ -305,19 +305,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
 
     router.push("/auth/login");
-      setUser(null);
-      setFirebaseUser(null);
-
-      // Clear localStorage
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("auth_token");
-        localStorage.removeItem("auth_user");
-      }
-
-      router.push("/auth/login");
-    } catch (error) {
-      console.error("Logout error:", error);
-    }
   };
 
   const emailSignup = async (
