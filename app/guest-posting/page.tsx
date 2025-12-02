@@ -128,13 +128,6 @@ export default function ServicesPage() {
                 High-quality, SEO-optimized guest posts that rank and convert.
                 Get published on verified high-authority websites.
               </p>
-              <Button
-                size="lg"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                onClick={() => router.push("/marketplace")}
-              >
-                Get Started
-              </Button>
             </div>
           </div>
         </section>
