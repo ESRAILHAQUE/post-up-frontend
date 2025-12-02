@@ -60,9 +60,11 @@ jobs:
             cd /var/www/guestpostup/frontend
             npm ci --production --legacy-peer-deps
             if pm2 list | grep -q "guestpostup-frontend"; then
-              pm2 restart guestpostup-frontend
-            else
-              PORT=3000 pm2 start npm --name guestpostup-frontend -- start
-              pm2 save
+              pm2 stop guestpostup-frontend
+              pm2 delete guestpostup-frontend
             fi
-            pm2 logs guestpostup-frontend --lines 20
+            PORT=3002 pm2 start npm --name guestpostup-frontend -- start
+            pm2 save
+            sleep 3
+            pm2 status
+            pm2 logs guestpostup-frontend --lines 20 --nostream
