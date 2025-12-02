@@ -19,7 +19,6 @@ import {
   FileText,
   PenTool,
   Sparkles,
-  FileCheck,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
@@ -335,33 +334,6 @@ export default function ServicesPage() {
                   </div>
                 </Card>
               ))}
-            </div>
-          </div>
-        </section>
-
-        {/* Custom Package Section */}
-        <section className="py-20 bg-gradient-to-r from-emerald-600 to-emerald-700">
-          <div className="container max-w-4xl">
-            <div className="text-center space-y-6">
-              <h2 className="text-3xl md:text-4xl font-bold text-white">
-                Need a Custom Package?
-              </h2>
-              <p className="text-lg text-emerald-50">
-                Looking for something specific? We create tailored SEO solutions
-                based on your project requirements and goals. Contact us for a
-                personalized quote.
-              </p>
-              <Button
-                size="lg"
-                variant="outline"
-                className="bg-white text-emerald-600 hover:bg-emerald-50 border-white"
-                asChild
-              >
-                <Link href="/contact">
-                  <FileCheck className="mr-2 h-5 w-5" />
-                  Get Custom Quote
-                </Link>
-              </Button>
             </div>
           </div>
         </section>
