@@ -118,9 +118,9 @@ export default function ServicesPage() {
 
       <main className="flex-1">
         {/* Hero Section */}
-        <section className="bg-gradient-to-b from-emerald-50 to-background py-20">
+        <section className="bg-gradient-to-b from-emerald-50 to-background py-12">
           <div className="container">
-            <div className="max-w-3xl mx-auto text-center space-y-6">
+            <div className="max-w-3xl mx-auto text-center space-y-4">
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
                 Premium Guest Posting Services
               </h1>
