@@ -24,7 +24,9 @@ if (firebaseConfig.apiKey && firebaseConfig.projectId) {
     auth = null;
   }
 } else {
-  console.warn("Firebase config is missing. Firebase features will be disabled.");
+  console.warn(
+    "Firebase config is missing. Firebase features will be disabled."
+  );
 }
 
 export { app, auth };

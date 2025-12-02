@@ -31,6 +31,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/api/client";
 import { ChevronDown, ChevronUp } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 interface Site {
   id: string;
@@ -53,6 +54,7 @@ export default function HomePage() {
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
     new Set()
   );
+  const router = useRouter();
 
   useEffect(() => {
     fetchFeaturedSites();
@@ -353,6 +355,239 @@ export default function HomePage() {
                 View All Sites <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Plans Section */}
+      <section id="pricing" className="py-20 bg-background">
+        <div className="container">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl md:text-4xl font-bold mb-4">
+              Accelerate Your Business Growth
+            </h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Select the perfect growth package tailored to your business needs. Each strategy is designed to deliver measurable results and sustainable growth for your online presence.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Starter Growth Package */}
+            <Card className="flex flex-col hover:shadow-lg transition-all">
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-2xl mb-2">Starter Growth Package</CardTitle>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Perfect for small businesses and startups looking to establish their online presence
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-baseline justify-center gap-2">
+                    <span className="text-3xl font-bold text-slate-400 line-through">
+                      $497
+                    </span>
+                    <span className="text-4xl font-bold text-emerald-600">
+                      $297
+                    </span>
+                  </div>
+                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                    Save $200
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">5 High-Quality Guest Posts</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Basic SEO Optimization</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Social Media Promotion</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Monthly Performance Report</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Email Support</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Content Calendar Planning</span>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-slate-200">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Expected <span className="font-semibold text-emerald-600">20-30%</span> increase in organic traffic within 3 months
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => router.push("/marketplace")}
+                >
+                  Buy Now
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Professional Growth Package - Most Popular */}
+            <Card className="flex flex-col hover:shadow-lg transition-all border-2 border-emerald-500 relative">
+              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                <Badge className="bg-emerald-500 text-white px-4 py-1">
+                  Most Popular
+                </Badge>
+              </div>
+              <CardHeader className="text-center pb-4 pt-6">
+                <CardTitle className="text-2xl mb-2">Professional Growth Package</CardTitle>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Ideal for growing businesses ready to scale their digital marketing efforts
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-baseline justify-center gap-2">
+                    <span className="text-3xl font-bold text-slate-400 line-through">
+                      $997
+                    </span>
+                    <span className="text-4xl font-bold text-emerald-600">
+                      $697
+                    </span>
+                  </div>
+                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                    Save $300
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">15 Premium Guest Posts</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Advanced SEO Strategy</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Multi-Platform Social Media</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Bi-weekly Strategy Calls</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Priority Support</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Competitor Analysis</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Link Building Campaign</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Content Optimization</span>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-slate-200">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Expected <span className="font-semibold text-emerald-600">50-70%</span> increase in organic traffic within 3 months
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => router.push("/marketplace")}
+                >
+                  Buy Now
+                </Button>
+              </CardFooter>
+            </Card>
+
+            {/* Enterprise Growth Package */}
+            <Card className="flex flex-col hover:shadow-lg transition-all">
+              <CardHeader className="text-center pb-4">
+                <CardTitle className="text-2xl mb-2">Enterprise Growth Package</CardTitle>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Comprehensive solution for established businesses seeking maximum growth
+                </p>
+                <div className="space-y-2">
+                  <div className="flex items-baseline justify-center gap-2">
+                    <span className="text-3xl font-bold text-slate-400 line-through">
+                      $2497
+                    </span>
+                    <span className="text-4xl font-bold text-emerald-600">
+                      $1497
+                    </span>
+                  </div>
+                  <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">
+                    Save $1000
+                  </Badge>
+                </div>
+              </CardHeader>
+              <CardContent className="flex-1 space-y-4">
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">30 Premium Guest Posts</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Custom SEO Strategy</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Full Digital Marketing Suite</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Weekly Strategy Sessions</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Dedicated Account Manager</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Advanced Analytics Dashboard</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">PR & Media Outreach</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Conversion Optimization</span>
+                  </div>
+                  <div className="flex items-start gap-2">
+                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <span className="text-sm">Brand Authority Building</span>
+                  </div>
+                </div>
+                <div className="pt-4 border-t border-slate-200">
+                  <p className="text-sm text-muted-foreground text-center">
+                    Expected <span className="font-semibold text-emerald-600">100-150%</span> increase in organic traffic within 3 months
+                  </p>
+                </div>
+              </CardContent>
+              <CardFooter>
+                <Button 
+                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                  onClick={() => router.push("/marketplace")}
+                >
+                  Buy Now
+                </Button>
+              </CardFooter>
+            </Card>
           </div>
         </div>
       </section>
