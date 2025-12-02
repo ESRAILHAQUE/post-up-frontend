@@ -112,7 +112,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Try to restore from localStorage first
     const hasStoredAuth = checkStoredAuth();
 
-    // Listen to Firebase auth state changes
+    // Listen to Firebase auth state changes (only if auth is available)
+    if (!auth) {
+      // If Firebase is not configured, just set loading to false
+      setIsLoading(false);
+      return;
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setFirebaseUser(firebaseUser);
@@ -173,6 +179,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
+    if (!auth) {
+      return {
+        success: false,
+        error: "Firebase is not configured. Please contact support.",
+      };
+    }
     try {
       const userCredential = await signInWithEmailAndPassword(
         auth,
@@ -228,6 +240,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signup = async (email: string, password: string, name: string) => {
+    if (!auth) {
+      return {
+        success: false,
+        error: "Firebase is not configured. Please contact support.",
+      };
+    }
     try {
       const userCredential = await createUserWithEmailAndPassword(
         auth,
@@ -269,8 +287,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    try {
-      await signOut(auth);
+    if (auth) {
+      try {
+        await signOut(auth);
+      } catch (error) {
+        console.error("Logout error:", error);
+      }
+    }
+    
+    setUser(null);
+    setFirebaseUser(null);
+
+    // Clear localStorage
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("auth_user");
+    }
+
+    router.push("/auth/login");
       setUser(null);
       setFirebaseUser(null);
 
@@ -348,6 +382,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const googleSignIn = async () => {
+    if (!auth) {
+      return {
+        success: false,
+        error: "Firebase is not configured. Please contact support.",
+      };
+    }
     try {
       const provider = new GoogleAuthProvider();
       const result = await signInWithPopup(auth, provider);

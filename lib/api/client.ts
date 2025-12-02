@@ -21,10 +21,12 @@ apiClient.interceptors.request.use(
       config.headers.Authorization = `Bearer ${jwtToken}`;
     } else {
       // Fallback to Firebase token (for Google sign-in)
-      const user = auth.currentUser;
-      if (user) {
-        const token = await user.getIdToken();
-        config.headers.Authorization = `Bearer ${token}`;
+      if (auth) {
+        const user = auth.currentUser;
+        if (user) {
+          const token = await user.getIdToken();
+          config.headers.Authorization = `Bearer ${token}`;
+        }
       }
     }
     return config;
