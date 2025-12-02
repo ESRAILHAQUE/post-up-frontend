@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "guestpostup-frontend",
       script: "node_modules/.bin/next",
-      args: "start",
+      args: "start -p 3002",
       env: {
         PORT: "3002",
         NODE_ENV: "production",
