@@ -226,7 +226,7 @@ export default function ServicesPage() {
               {processSteps.map((step) => {
                 return (
                   <Card key={step.number} className="text-center border-slate-200 shadow-sm">
-                    <CardHeader className="pb-2 pt-6">
+                    <CardHeader className=" pt-2">
                       <div className="flex flex-col items-center gap-3">
                         <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center text-xl font-bold shadow-md">
                           {step.number}
@@ -236,7 +236,7 @@ export default function ServicesPage() {
                         </CardTitle>
                       </div>
                     </CardHeader>
-                    <CardContent className="pt-2 pb-4">
+                    <CardContent className="">
                       <p className="text-sm text-slate-600 leading-relaxed">
                         {step.description}
                       </p>
