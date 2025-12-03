@@ -498,34 +498,58 @@ export default function HomePage() {
 
           {/* For Agencies Section */}
           <div className="mt-16 max-w-4xl mx-auto">
-            <Card className="bg-gradient-to-br from-slate-50 to-slate-100 border-2 border-slate-200">
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl mb-2">For Agencies</CardTitle>
-                <h3 className="text-xl font-semibold text-slate-700 mb-4">Custom for Agencies</h3>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <div className="space-y-2 text-muted-foreground">
-                  <p className="text-sm">* White-label solutions for agencies & SEO professionals</p>
-                  <p className="text-sm">* Build a backlink package to fit your client needs</p>
-                  <p className="text-sm">* Custom Reporting Dashboard</p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-                  <Button 
-                    variant="outline"
-                    className="bg-white hover:bg-slate-50 text-slate-900 hover:text-slate-900 border-slate-300"
-                    asChild
-                  >
-                    <Link href="/contact">Let's talk</Link>
-                  </Button>
-                  <Button 
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                    asChild
-                  >
-                    <Link href="/contact">Book a call</Link>
-                  </Button>
+            <div className="text-center mb-6">
+              <h3 className="text-lg text-muted-foreground">For Agencies</h3>
+            </div>
+            <Card className="bg-white border-2 border-slate-200">
+              <CardContent className="p-8">
+                <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+                  {/* Left side - Title and Price */}
+                  <div className="flex-1">
+                    <p className="text-sm text-muted-foreground mb-2">Custom for Agencies</p>
+                    <h3 className="text-3xl md:text-4xl font-bold text-slate-900">Custom Price</h3>
+                  </div>
+                  
+                  {/* Middle - Features */}
+                  <div className="flex-1 space-y-3">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                      <span className="text-sm text-slate-700">White-label solutions for agencies & SEO professionals</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                      <span className="text-sm text-slate-700">Build a backlink package to fit your client needs</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                      <span className="text-sm text-slate-700">Custom Reporting Dashboard</span>
+                    </div>
+                  </div>
+                  
+                  {/* Right side - Let's talk button */}
+                  <div className="flex-shrink-0">
+                    <Button 
+                      variant="outline"
+                      className="bg-white hover:bg-slate-50 text-slate-900 hover:text-slate-900 border-slate-300"
+                      asChild
+                    >
+                      <Link href="/contact">Let's talk</Link>
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>
+            
+            {/* Book a call button below */}
+            <div className="text-center mt-6">
+              <Button 
+                className="bg-slate-900 hover:bg-slate-800 text-white"
+                size="lg"
+                asChild
+              >
+                <Link href="/contact">Book a call</Link>
+              </Button>
+            </div>
           </div>
 
           {/* Support Section */}
