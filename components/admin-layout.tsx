@@ -105,7 +105,7 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   }`}
                   asChild
                 >
-                  <Link href="/admin/pages">
+                  <Link href="/admin/pages/guest-posting">
                     <FileEdit className="mr-2 h-4 w-4" />
                     Guest Posting
                   </Link>
