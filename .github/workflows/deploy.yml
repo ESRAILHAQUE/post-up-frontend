@@ -60,6 +60,8 @@ jobs:
           target: "/var/www/guestpostup/frontend"
           strip_components: 0
           rm: false
+          timeout: 60s
+          command_timeout: 15m
 
       - name: SSH and restart frontend
         uses: appleboy/ssh-action@v1.0.3
