@@ -19,6 +19,17 @@ interface ProcessStep {
   description: string;
 }
 
+interface PricingPlan {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice: number;
+  quantity: string;
+  features: string[];
+  popular: boolean;
+  packageId: string;
+}
+
 interface PageContent {
   hero: {
     title: string;
@@ -37,6 +48,7 @@ interface PageContent {
   pricingPlans: {
     title: string;
     description: string;
+    plans: PricingPlan[];
   };
 }
 
@@ -92,6 +104,61 @@ export default function AdminGuestPostingPage() {
     pricingPlans: {
       title: "Pricing Plans",
       description: "Choose the perfect package for your content needs.",
+      plans: [
+        {
+          id: "starter",
+          name: "Starter Package",
+          price: 297,
+          originalPrice: 497,
+          quantity: "5 Guest Posts",
+          features: [
+            "5 High-Quality Guest Posts",
+            "DA 40-50 websites",
+            "Basic SEO optimization",
+            "1 revision per article",
+            "7-10 day delivery",
+            "General topics",
+          ],
+          popular: false,
+          packageId: "starter-growth-package",
+        },
+        {
+          id: "professional",
+          name: "Professional Package",
+          price: 697,
+          originalPrice: 997,
+          quantity: "15 Guest Posts",
+          features: [
+            "15 Premium Guest Posts",
+            "DA 50-60 websites",
+            "Advanced SEO optimization",
+            "2 revisions per article",
+            "5-7 day delivery",
+            "Industry-specific content",
+            "Content review included",
+          ],
+          popular: true,
+          packageId: "professional-growth-package",
+        },
+        {
+          id: "enterprise",
+          name: "Enterprise Package",
+          price: 1497,
+          originalPrice: 2497,
+          quantity: "30 Guest Posts",
+          features: [
+            "30 Premium Guest Posts",
+            "DA 60-70+ websites",
+            "Premium SEO optimization",
+            "Unlimited revisions",
+            "3-5 day delivery",
+            "Content strategy consultation",
+            "Priority support",
+          ],
+          popular: false,
+          packageId: "enterprise-growth-package",
+        },
+      ],
     },
   });
 
@@ -191,6 +258,92 @@ export default function AdminGuestPostingPage() {
       step.number = i + 1;
     });
     setContent({ ...content, processSteps: newSteps });
+  };
+
+  const addPricingPlan = () => {
+    const newPlan: PricingPlan = {
+      id: `plan-${content.pricingPlans.plans.length + 1}`,
+      name: "",
+      price: 0,
+      originalPrice: 0,
+      quantity: "",
+      features: [],
+      popular: false,
+      packageId: "",
+    };
+    setContent({
+      ...content,
+      pricingPlans: {
+        ...content.pricingPlans,
+        plans: [...content.pricingPlans.plans, newPlan],
+      },
+    });
+  };
+
+  const updatePricingPlan = (
+    index: number,
+    field: keyof PricingPlan,
+    value: string | number | boolean
+  ) => {
+    const newPlans = [...content.pricingPlans.plans];
+    newPlans[index] = { ...newPlans[index], [field]: value };
+    setContent({
+      ...content,
+      pricingPlans: { ...content.pricingPlans, plans: newPlans },
+    });
+  };
+
+  const removePricingPlan = (index: number) => {
+    const newPlans = content.pricingPlans.plans.filter((_, i) => i !== index);
+    setContent({
+      ...content,
+      pricingPlans: { ...content.pricingPlans, plans: newPlans },
+    });
+  };
+
+  const togglePlanPopular = (index: number) => {
+    const newPlans = [...content.pricingPlans.plans];
+    // Only one plan can be popular, so unset others
+    newPlans.forEach((plan, i) => {
+      plan.popular = i === index ? !plan.popular : false;
+    });
+    setContent({
+      ...content,
+      pricingPlans: { ...content.pricingPlans, plans: newPlans },
+    });
+  };
+
+  const addPlanFeature = (planIndex: number) => {
+    const newPlans = [...content.pricingPlans.plans];
+    newPlans[planIndex].features.push("");
+    setContent({
+      ...content,
+      pricingPlans: { ...content.pricingPlans, plans: newPlans },
+    });
+  };
+
+  const updatePlanFeature = (
+    planIndex: number,
+    featureIndex: number,
+    value: string
+  ) => {
+    const newPlans = [...content.pricingPlans.plans];
+    newPlans[planIndex].features[featureIndex] = value;
+    setContent({
+      ...content,
+      pricingPlans: { ...content.pricingPlans, plans: newPlans },
+    });
+  };
+
+  const removePlanFeature = (planIndex: number, featureIndex: number) => {
+    const newPlans = [...content.pricingPlans.plans];
+    newPlans[planIndex].features = newPlans[planIndex].features.filter(
+      (_, i) => i !== featureIndex
+    );
+    setContent({
+      ...content,
+      pricingPlans: { ...content.pricingPlans, plans: newPlans },
+    });
   };
 
   if (loading) {
@@ -477,9 +630,158 @@ export default function AdminGuestPostingPage() {
                   rows={2}
                 />
               </div>
-              <p className="text-sm text-gray-500">
-                Note: Actual pricing plans are managed in the Packages section.
-              </p>
+            </CardContent>
+          </Card>
+
+          {/* Pricing Plans Management */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle>Pricing Plans</CardTitle>
+                <Button onClick={addPricingPlan} size="sm" variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Plan
+                </Button>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {content.pricingPlans.plans.map((plan, index) => (
+                <div
+                  key={plan.id}
+                  className="p-4 border rounded-lg space-y-4 bg-gray-50"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">
+                      Plan {index + 1}
+                    </span>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={() => togglePlanPopular(index)}
+                        size="sm"
+                        variant={plan.popular ? "default" : "outline"}
+                      >
+                        {plan.popular ? "Popular" : "Mark Popular"}
+                      </Button>
+                      <Button
+                        onClick={() => removePricingPlan(index)}
+                        variant="destructive"
+                        size="sm"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <Label>Plan ID</Label>
+                      <Input
+                        value={plan.id}
+                        onChange={(e) =>
+                          updatePricingPlan(index, "id", e.target.value)
+                        }
+                        placeholder="e.g., starter"
+                      />
+                    </div>
+                    <div>
+                      <Label>Package ID (for checkout)</Label>
+                      <Input
+                        value={plan.packageId}
+                        onChange={(e) =>
+                          updatePricingPlan(index, "packageId", e.target.value)
+                        }
+                        placeholder="e.g., starter-growth-package"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Plan Name</Label>
+                    <Input
+                      value={plan.name}
+                      onChange={(e) =>
+                        updatePricingPlan(index, "name", e.target.value)
+                      }
+                      placeholder="e.g., Starter Package"
+                    />
+                  </div>
+                  <div className="grid grid-cols-3 gap-4">
+                    <div>
+                      <Label>Price ($)</Label>
+                      <Input
+                        type="number"
+                        value={plan.price}
+                        onChange={(e) =>
+                          updatePricingPlan(
+                            index,
+                            "price",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Original Price ($)</Label>
+                      <Input
+                        type="number"
+                        value={plan.originalPrice}
+                        onChange={(e) =>
+                          updatePricingPlan(
+                            index,
+                            "originalPrice",
+                            parseFloat(e.target.value) || 0
+                          )
+                        }
+                      />
+                    </div>
+                    <div>
+                      <Label>Quantity</Label>
+                      <Input
+                        value={plan.quantity}
+                        onChange={(e) =>
+                          updatePricingPlan(index, "quantity", e.target.value)
+                        }
+                        placeholder="e.g., 5 Guest Posts"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <div className="flex items-center justify-between mb-2">
+                      <Label>Features</Label>
+                      <Button
+                        onClick={() => addPlanFeature(index)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Plus className="h-3 w-3 mr-1" />
+                        Add Feature
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      {plan.features.map((feature, featureIndex) => (
+                        <div key={featureIndex} className="flex gap-2">
+                          <Input
+                            value={feature}
+                            onChange={(e) =>
+                              updatePlanFeature(
+                                index,
+                                featureIndex,
+                                e.target.value
+                              )
+                            }
+                            placeholder="Feature text"
+                          />
+                          <Button
+                            onClick={() => removePlanFeature(index, featureIndex)}
+                            variant="destructive"
+                            size="sm"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </CardContent>
           </Card>
 

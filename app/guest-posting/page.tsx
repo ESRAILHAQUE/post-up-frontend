@@ -12,10 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
-import {
-  CheckCircle2,
-  ArrowRight,
-} from "lucide-react";
+import { CheckCircle2, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import apiClient from "@/lib/api/client";
@@ -24,6 +21,17 @@ interface ProcessStep {
   number: number;
   title: string;
   description: string;
+}
+
+interface PricingPlan {
+  id: string;
+  name: string;
+  price: number;
+  originalPrice: number;
+  quantity: string;
+  features: string[];
+  popular: boolean;
+  packageId: string;
 }
 
 interface PageContent {
@@ -44,6 +52,7 @@ interface PageContent {
   pricingPlans: {
     title: string;
     description: string;
+    plans: PricingPlan[];
   };
 }
 
@@ -99,6 +108,61 @@ export default function ServicesPage() {
     pricingPlans: {
       title: "Pricing Plans",
       description: "Choose the perfect package for your content needs.",
+      plans: [
+        {
+          id: "starter",
+          name: "Starter Package",
+          price: 297,
+          originalPrice: 497,
+          quantity: "5 Guest Posts",
+          features: [
+            "5 High-Quality Guest Posts",
+            "DA 40-50 websites",
+            "Basic SEO optimization",
+            "1 revision per article",
+            "7-10 day delivery",
+            "General topics",
+          ],
+          popular: false,
+          packageId: "starter-growth-package",
+        },
+        {
+          id: "professional",
+          name: "Professional Package",
+          price: 697,
+          originalPrice: 997,
+          quantity: "15 Guest Posts",
+          features: [
+            "15 Premium Guest Posts",
+            "DA 50-60 websites",
+            "Advanced SEO optimization",
+            "2 revisions per article",
+            "5-7 day delivery",
+            "Industry-specific content",
+            "Content review included",
+          ],
+          popular: true,
+          packageId: "professional-growth-package",
+        },
+        {
+          id: "enterprise",
+          name: "Enterprise Package",
+          price: 1497,
+          originalPrice: 2497,
+          quantity: "30 Guest Posts",
+          features: [
+            "30 Premium Guest Posts",
+            "DA 60-70+ websites",
+            "Premium SEO optimization",
+            "Unlimited revisions",
+            "3-5 day delivery",
+            "Content strategy consultation",
+            "Priority support",
+          ],
+          popular: false,
+          packageId: "enterprise-growth-package",
+        },
+      ],
     },
   });
 
@@ -119,62 +183,6 @@ export default function ServicesPage() {
     }
   };
 
-  // Pricing plans come from packages API - keeping default structure for now
-  const pricingPlans = [
-    {
-      id: "starter",
-      name: "Starter Package",
-      price: 297,
-      originalPrice: 497,
-      quantity: "5 Guest Posts",
-      features: [
-        "5 High-Quality Guest Posts",
-        "DA 40-50 websites",
-        "Basic SEO optimization",
-        "1 revision per article",
-        "7-10 day delivery",
-        "General topics",
-      ],
-      popular: false,
-      packageId: "starter-growth-package",
-    },
-    {
-      id: "professional",
-      name: "Professional Package",
-      price: 697,
-      originalPrice: 997,
-      quantity: "15 Guest Posts",
-      features: [
-        "15 Premium Guest Posts",
-        "DA 50-60 websites",
-        "Advanced SEO optimization",
-        "2 revisions per article",
-        "5-7 day delivery",
-        "Industry-specific content",
-        "Content review included",
-      ],
-      popular: true,
-      packageId: "professional-growth-package",
-    },
-    {
-      id: "enterprise",
-      name: "Enterprise Package",
-      price: 1497,
-      originalPrice: 2497,
-      quantity: "30 Guest Posts",
-      features: [
-        "30 Premium Guest Posts",
-        "DA 60-70+ websites",
-        "Premium SEO optimization",
-        "Unlimited revisions",
-        "3-5 day delivery",
-        "Content strategy consultation",
-        "Priority support",
-      ],
-      popular: false,
-      packageId: "enterprise-growth-package",
-    },
-  ];
 
   const handleOrderNow = (packageId: string) => {
     router.push(`/checkout?package=${packageId}`);
@@ -258,29 +266,31 @@ export default function ServicesPage() {
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                   {content.processSteps.map((step) => {
-                return (
-                  <Card key={step.number} className="text-center border-slate-200 shadow-sm">
-                    <CardHeader className=" pt-2">
-                      <div className="flex flex-col items-center gap-3">
-                        <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center text-xl font-bold shadow-md">
-                          {step.number}
-                        </div>
-                        <CardTitle className="text-lg font-semibold text-slate-900">
-                          {step.title}
-                        </CardTitle>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="">
-                      <p className="text-sm text-slate-600 leading-relaxed">
-                        {step.description}
-                      </p>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
-        </section>
+                    return (
+                      <Card
+                        key={step.number}
+                        className="text-center border-slate-200 shadow-sm">
+                        <CardHeader className=" pt-2">
+                          <div className="flex flex-col items-center gap-3">
+                            <div className="w-14 h-14 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 text-white flex items-center justify-center text-xl font-bold shadow-md">
+                              {step.number}
+                            </div>
+                            <CardTitle className="text-lg font-semibold text-slate-900">
+                              {step.title}
+                            </CardTitle>
+                          </div>
+                        </CardHeader>
+                        <CardContent className="">
+                          <p className="text-sm text-slate-600 leading-relaxed">
+                            {step.description}
+                          </p>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+            </section>
 
             {/* Pricing Plans Section */}
             <section className="py-12 bg-background">
@@ -294,66 +304,66 @@ export default function ServicesPage() {
                   </p>
                 </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              {pricingPlans.map((plan) => (
-                <Card
-                  key={plan.id}
-                  className={`flex flex-col ${
-                    plan.popular
-                      ? "border-2 border-emerald-500 relative shadow-lg"
-                      : ""
-                  }`}
-                >
-                  {plan.popular && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                      <Badge className="bg-emerald-500 text-white px-4 py-1">
-                        Most Popular
-                      </Badge>
-                    </div>
-                  )}
-                  <CardHeader className={plan.popular ? "pt-6" : ""}>
-                    <CardTitle className="text-2xl mb-2">{plan.name}</CardTitle>
-                    <div className="space-y-2">
-                      <div className="flex items-baseline gap-2">
-                        <span className="text-3xl font-bold text-slate-400 line-through">
-                          ${plan.originalPrice}
-                        </span>
-                        <span className="text-4xl font-bold text-emerald-600">
-                          ${plan.price}
-                        </span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {plan.quantity}
-                      </p>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="flex-1 space-y-4">
-                    <div className="space-y-3">
-                      {plan.features.map((feature, index) => (
-                        <div key={index} className="flex items-start gap-2">
-                          <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                          <span className="text-sm">{feature}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                  <div className="p-6 pt-0">
-                    <Button
-                      className={`w-full ${
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                   {content.pricingPlans.plans.map((plan) => (
+                    <Card
+                      key={plan.id}
+                      className={`flex flex-col ${
                         plan.popular
-                          ? "bg-emerald-600 hover:bg-emerald-700"
-                          : "bg-emerald-600 hover:bg-emerald-700"
-                      } text-white`}
-                      onClick={() => handleOrderNow(plan.packageId)}
-                    >
-                      Order Now
-                    </Button>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </section>
+                          ? "border-2 border-emerald-500 relative shadow-lg"
+                          : ""
+                      }`}>
+                      {plan.popular && (
+                        <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                          <Badge className="bg-emerald-500 text-white px-4 py-1">
+                            Most Popular
+                          </Badge>
+                        </div>
+                      )}
+                      <CardHeader className={plan.popular ? "pt-6" : ""}>
+                        <CardTitle className="text-2xl mb-2">
+                          {plan.name}
+                        </CardTitle>
+                        <div className="space-y-2">
+                          <div className="flex items-baseline gap-2">
+                            <span className="text-3xl font-bold text-slate-400 line-through">
+                              ${plan.originalPrice}
+                            </span>
+                            <span className="text-4xl font-bold text-emerald-600">
+                              ${plan.price}
+                            </span>
+                          </div>
+                          <p className="text-sm text-muted-foreground">
+                            {plan.quantity}
+                          </p>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="flex-1 space-y-4">
+                        <div className="space-y-3">
+                          {plan.features.map((feature, index) => (
+                            <div key={index} className="flex items-start gap-2">
+                              <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                              <span className="text-sm">{feature}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                      <div className="p-6 pt-0">
+                        <Button
+                          className={`w-full ${
+                            plan.popular
+                              ? "bg-emerald-600 hover:bg-emerald-700"
+                              : "bg-emerald-600 hover:bg-emerald-700"
+                          } text-white`}
+                          onClick={() => handleOrderNow(plan.packageId)}>
+                          Order Now
+                        </Button>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            </section>
           </>
         )}
       </main>
