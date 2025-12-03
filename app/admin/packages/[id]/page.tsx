@@ -49,6 +49,7 @@ export default function EditPackagePage() {
   const [fetching, setFetching] = useState(true);
   const [formData, setFormData] = useState({
     name: "",
+    slug: "",
     description: "",
     price: "",
     discounted_price: "",
@@ -75,6 +76,7 @@ export default function EditPackagePage() {
 
       setFormData({
         name: pkg.name,
+        slug: pkg.slug || "",
         description: pkg.description,
         price: pkg.price.toString(),
         discounted_price: pkg.discounted_price.toString(),
@@ -232,6 +234,21 @@ export default function EditPackagePage() {
                   />
                 </div>
 
+                <div>
+                  <Label htmlFor="slug">Slug (URL-friendly identifier)</Label>
+                  <Input
+                    id="slug"
+                    value={formData.slug}
+                    onChange={(e) => handleInputChange("slug", e.target.value)}
+                    placeholder="e.g., starter-growth-package"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Used in URLs. Leave empty to auto-generate from name.
+                  </p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <Label htmlFor="category">Category *</Label>
                   <Select
