@@ -35,6 +35,7 @@ export default function NewPackagePage() {
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
+    slug: "",
     description: "",
     price: "",
     discounted_price: "",
@@ -171,6 +172,23 @@ export default function NewPackagePage() {
                     />
                   </div>
 
+                  <div>
+                    <Label htmlFor="slug">Slug (URL-friendly identifier)</Label>
+                    <Input
+                      id="slug"
+                      value={formData.slug}
+                      onChange={(e) =>
+                        handleInputChange("slug", e.target.value)
+                      }
+                      placeholder="e.g., starter-growth-package"
+                    />
+                    <p className="text-xs text-slate-500 mt-1">
+                      Used in URLs. Leave empty to auto-generate from name.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <Label htmlFor="category">Category *</Label>
                     <Select
