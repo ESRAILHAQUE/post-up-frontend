@@ -5,11 +5,18 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth/auth-context";
 import { useState } from "react";
-import { Menu, X } from "lucide-react";
+import { Menu, X, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function SiteHeader() {
   const { user, logout, isLoading } = useAuth();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isServicesOpen, setIsServicesOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-emerald-900/20 bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 backdrop-blur supports-[backdrop-filter]:bg-gradient-to-r supports-[backdrop-filter]:from-slate-900/95 supports-[backdrop-filter]:via-slate-800/95 supports-[backdrop-filter]:to-emerald-950/95">
@@ -34,11 +41,28 @@ export function SiteHeader() {
             className="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors">
             Marketplace
           </Link>
-          <Link
-            href="/packages"
-            className="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors">
-            Packages
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger className="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors flex items-center gap-1 outline-none">
+              Services
+              <ChevronDown className="h-4 w-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="bg-slate-800 border-slate-700">
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/guest-posting"
+                  className="text-slate-300 hover:text-emerald-400 cursor-pointer">
+                  Guest posting
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href="/packages"
+                  className="text-slate-300 hover:text-emerald-400 cursor-pointer">
+                  Premium Packages
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Link
             href="/blog"
             className="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors">
@@ -116,12 +140,40 @@ export function SiteHeader() {
                 onClick={() => setIsMobileMenuOpen(false)}>
                 Marketplace
               </Link>
-              <Link
-                href="/packages"
-                className="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors py-2"
-                onClick={() => setIsMobileMenuOpen(false)}>
-                Packages
-              </Link>
+              <div>
+                <button
+                  onClick={() => setIsServicesOpen(!isServicesOpen)}
+                  className="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors py-2 flex items-center justify-between w-full">
+                  Services
+                  <ChevronDown
+                    className={`h-4 w-4 transition-transform ${
+                      isServicesOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+                {isServicesOpen && (
+                  <div className="pl-4 mt-2 space-y-2">
+                    <Link
+                      href="/guest-posting"
+                      className="text-sm text-slate-400 hover:text-emerald-400 transition-colors py-2 block"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setIsServicesOpen(false);
+                      }}>
+                      Guest posting
+                    </Link>
+                    <Link
+                      href="/packages"
+                      className="text-sm text-slate-400 hover:text-emerald-400 transition-colors py-2 block"
+                      onClick={() => {
+                        setIsMobileMenuOpen(false);
+                        setIsServicesOpen(false);
+                      }}>
+                      Premium Packages
+                    </Link>
+                  </div>
+                )}
+              </div>
               <Link
                 href="/blog"
                 className="text-sm font-medium text-slate-300 hover:text-emerald-400 transition-colors py-2"
