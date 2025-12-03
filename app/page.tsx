@@ -497,7 +497,7 @@ export default function HomePage() {
           </div>
 
           {/* For Agencies Section */}
-          <div className="mt-16 max-w-4xl mx-auto">
+          <div className="mt-16 max-w-6xl mx-auto">
             <div className="text-center mb-6">
               <h3 className="text-lg text-muted-foreground">For Agencies</h3>
             </div>
@@ -552,21 +552,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Support Section */}
-          <div className="mt-12 text-center">
-            <p className="text-muted-foreground mb-4">
-              Not found exactly what you're looking for?
-            </p>
-            <p className="text-muted-foreground mb-4">
-              Book a 1:1 with us.
-            </p>
-            <Button 
-              variant="outline"
-              asChild
-            >
-              <Link href="/contact">Book a call</Link>
-            </Button>
-          </div>
         </div>
       </section>
 
