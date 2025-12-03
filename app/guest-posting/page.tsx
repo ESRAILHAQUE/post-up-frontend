@@ -183,7 +183,6 @@ export default function ServicesPage() {
     }
   };
 
-
   const handleOrderNow = (packageId: string) => {
     router.push(`/checkout?package=${packageId}`);
   };
@@ -304,8 +303,8 @@ export default function ServicesPage() {
                   </p>
                 </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                   {content.pricingPlans.plans.map((plan) => (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                  {content.pricingPlans.plans.map((plan) => (
                     <Card
                       key={plan.id}
                       className={`flex flex-col ${
