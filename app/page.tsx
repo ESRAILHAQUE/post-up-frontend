@@ -48,8 +48,21 @@ interface Site {
   image_url: string | null;
 }
 
+interface Package {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  discounted_price: number;
+  features: string[];
+  category: string;
+  slug?: string;
+  imageUrl?: string;
+}
+
 export default function HomePage() {
   const [sites, setSites] = useState<Site[]>([]);
+  const [packages, setPackages] = useState<Package[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
     new Set()
@@ -58,6 +71,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchFeaturedSites();
+    fetchPackages();
   }, []);
 
   async function fetchFeaturedSites() {
@@ -102,6 +116,37 @@ export default function HomePage() {
       setSites([]);
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function fetchPackages() {
+    try {
+      const response = await apiClient.get("/packages/active");
+      const packagesData = Array.isArray(response.data.data) 
+        ? response.data.data 
+        : response.data.data?.packages || [];
+      
+      const activePackages = packagesData.map((pkg: any) => ({
+        _id: pkg._id,
+        name: pkg.name,
+        description: pkg.description,
+        price: pkg.price,
+        discounted_price: pkg.discounted_price,
+        features: pkg.features || [],
+        category: pkg.category,
+        slug: pkg.slug,
+        imageUrl: pkg.imageUrl,
+      }));
+      
+      // Sort packages: Starter, Pro, Growth (or by price)
+      const sortedPackages = activePackages.sort((a: Package, b: Package) => 
+        a.discounted_price - b.discounted_price
+      );
+      
+      setPackages(sortedPackages);
+    } catch (error: any) {
+      console.error("[Homepage] Error fetching packages:", error);
+      setPackages([]);
     }
   }
 
@@ -375,194 +420,77 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {/* Starter Package */}
-            <Card className="flex flex-col hover:shadow-lg transition-all">
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl mb-4">Starter</CardTitle>
-                <div className="space-y-2 mb-6">
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold text-slate-900">$299</span>
-                    <span className="text-lg text-muted-foreground">/ mo</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2">
-                    <Zap className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">8+ Links Per Month</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Average DR 40-70 Links</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Authority Links Included</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Basic Target Page Planning</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Anchor Text Optimization</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Monthly Reporting Dashboard</span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={() => router.push("/guest-posting")}
-                >
-                  Buy Now
-                </Button>
-              </CardFooter>
-            </Card>
-
-            {/* Pro Package - Popular */}
-            <Card className="flex flex-col hover:shadow-lg transition-all border-2 border-emerald-500 relative">
-              <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                <Badge className="bg-emerald-500 text-white px-4 py-1">
-                  POPULAR
-                </Badge>
+            {packages.length > 0 ? (
+              packages.slice(0, 3).map((pkg, index) => {
+                const isPopular = index === 1; // Middle package is popular
+                const packageId = pkg.slug || pkg._id;
+                const displayName = pkg.name.replace(/Package|Growth|Package/gi, "").trim() || pkg.name;
+                
+                return (
+                  <Card 
+                    key={pkg._id}
+                    className={`flex flex-col hover:shadow-lg transition-all ${
+                      isPopular ? "border-2 border-emerald-500 relative" : ""
+                    }`}
+                  >
+                    {isPopular && (
+                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
+                        <Badge className="bg-emerald-500 text-white px-4 py-1">
+                          POPULAR
+                        </Badge>
+                      </div>
+                    )}
+                    <CardHeader className={`text-center pb-4 ${isPopular ? "pt-6" : ""}`}>
+                      <CardTitle className="text-2xl mb-4">{displayName}</CardTitle>
+                      <div className="space-y-2 mb-6">
+                        <div className="flex items-baseline justify-center gap-1">
+                          <span className="text-4xl font-bold text-slate-900">
+                            ${pkg.discounted_price}
+                          </span>
+                          <span className="text-lg text-muted-foreground">/ mo</span>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 space-y-4">
+                      <div className="space-y-3">
+                        {pkg.features.slice(0, 1).map((feature, idx) => (
+                          <div key={idx} className="flex items-start gap-2">
+                            <Zap className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                            <span className="text-sm">{feature}</span>
+                          </div>
+                        ))}
+                        {pkg.features.slice(1).map((feature, idx) => (
+                          <div key={idx} className="flex items-start gap-2">
+                            <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                            <span className="text-sm">{feature}</span>
+                          </div>
+                        ))}
+                      </div>
+                      {isPopular && (
+                        <div className="pt-2">
+                          <Badge variant="outline" className="text-xs">
+                            Limited availability
+                          </Badge>
+                        </div>
+                      )}
+                    </CardContent>
+                    <CardFooter>
+                      <Button 
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={() => router.push(`/checkout?package=${packageId}`)}
+                      >
+                        Buy Now
+                      </Button>
+                    </CardFooter>
+                  </Card>
+                );
+              })
+            ) : (
+              // Loading or empty state
+              <div className="col-span-3 text-center py-12">
+                <p className="text-muted-foreground">Loading packages...</p>
               </div>
-              <CardHeader className="text-center pb-4 pt-6">
-                <CardTitle className="text-2xl mb-4">Pro</CardTitle>
-                <div className="space-y-2 mb-6">
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold text-slate-900">$5999</span>
-                    <span className="text-lg text-muted-foreground">/ mo</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2">
-                    <Zap className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">16+ Links Per Month</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Average DR 50-90 Links</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Authority Links Included</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Target Page Planning</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Anchor Text Optimization</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Competitor Backlink Gap Analysis</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Keyword Analysis</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Custom Reporting Dashboard</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Boosts visibility in both Google search and AI-generated answers</span>
-                  </div>
-                </div>
-                <div className="pt-2">
-                  <Badge variant="outline" className="text-xs">
-                    Limited availability
-                  </Badge>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={() => router.push("/guest-posting")}
-                >
-                  Buy Now
-                </Button>
-              </CardFooter>
-            </Card>
-
-            {/* Growth Package */}
-            <Card className="flex flex-col hover:shadow-lg transition-all">
-              <CardHeader className="text-center pb-4">
-                <CardTitle className="text-2xl mb-4">Growth</CardTitle>
-                <div className="space-y-2 mb-6">
-                  <div className="flex items-baseline justify-center gap-1">
-                    <span className="text-4xl font-bold text-slate-900">$9999</span>
-                    <span className="text-lg text-muted-foreground">/ mo</span>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 space-y-4">
-                <div className="space-y-3">
-                  <div className="flex items-start gap-2">
-                    <Zap className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">25+ Links Per Month</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Average DR 50-90 Links</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Can spread across multiple domains</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Authority Links Included</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Target Page Planning</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Anchor Text Optimization</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Competitor Backlink Gap Analysis</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Keyword Analysis</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Custom Reporting Dashboard</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Internal Linking Optimization</span>
-                  </div>
-                  <div className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                    <span className="text-sm">Toxic Backlink Audit</span>
-                  </div>
-                </div>
-              </CardContent>
-              <CardFooter>
-                <Button 
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                  onClick={() => router.push("/guest-posting")}
-                >
-                  Buy Now
-                </Button>
-              </CardFooter>
-            </Card>
+            )}
           </div>
 
           {/* For Agencies Section */}
