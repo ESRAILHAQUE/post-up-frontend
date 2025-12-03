@@ -828,11 +828,23 @@ function CheckoutContent() {
 
         if (packageId) {
           // Fetch package from backend
-          const response = await apiClient.get(`/packages/${packageId}`);
-          itemData = response.data.data;
-          type = "package";
-          if (itemData) {
-            price = (itemData as Package).discounted_price;
+          try {
+            const response = await apiClient.get(`/packages/${packageId}`);
+            itemData = response.data.data;
+            type = "package";
+            if (itemData) {
+              price = (itemData as Package).discounted_price;
+            }
+          } catch (packageError: any) {
+            console.error("[Checkout] Package fetch error:", packageError);
+            if (packageError.response?.status === 404) {
+              throw new Error(
+                `Package not found. Please ensure the package slug "${packageId}" exists in the database. Contact admin if this issue persists.`
+              );
+            }
+            throw new Error(
+              "Failed to load package. Please try again or contact support."
+            );
           }
         } else if (siteId) {
           // Support both real backend ObjectIds and mock IDs from demo data
