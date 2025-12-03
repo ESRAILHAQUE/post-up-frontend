@@ -417,10 +417,10 @@ export default function HomePage() {
               Monthly Packages
             </p>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              {pricingContent?.pricingPlans.title || "Our Link Building Packages & Pricing"}
+              Our Link Building Packages & Pricing
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              {pricingContent?.pricingPlans.description || "Our monthly link building packages provide a fully managed service, so that you can focus on other aspects of SEO. All of our packages and plans include detailed strategy & bespoke outreach."}
+              Our monthly link building packages provide a fully managed service, so that you can focus on other aspects of SEO. All of our packages and plans include detailed strategy & bespoke outreach.
             </p>
           </div>
 
