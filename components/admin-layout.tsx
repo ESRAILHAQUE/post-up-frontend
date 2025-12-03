@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { LayoutDashboard, ShoppingBag, Globe, Users, CreditCard, Settings, FileText, PackageIcon, Wallet } from "lucide-react"
+import { LayoutDashboard, ShoppingBag, Globe, Users, CreditCard, Settings, FileText, PackageIcon, Wallet, FileEdit } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -94,6 +94,20 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   <Link href="/admin/blog">
                     <FileText className="mr-2 h-4 w-4" />
                     Blog Posts
+                  </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start ${
+                    isActive("/admin/pages")
+                      ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  asChild
+                >
+                  <Link href="/admin/pages">
+                    <FileEdit className="mr-2 h-4 w-4" />
+                    Pages
                   </Link>
                 </Button>
                 <Button

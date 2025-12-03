@@ -17,10 +17,109 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import apiClient from "@/lib/api/client";
+
+interface ProcessStep {
+  number: number;
+  title: string;
+  description: string;
+}
+
+interface PageContent {
+  hero: {
+    title: string;
+    description: string;
+  };
+  whatsIncluded: {
+    title: string;
+    description: string;
+  };
+  whyItMatters: {
+    title: string;
+    description: string;
+  };
+  keyBenefits: string[];
+  processSteps: ProcessStep[];
+  pricingPlans: {
+    title: string;
+    description: string;
+  };
+}
 
 export default function ServicesPage() {
   const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [content, setContent] = useState<PageContent>({
+    hero: {
+      title: "Premium Guest Posting Services",
+      description:
+        "High-quality, SEO-optimized guest posts that rank and convert. Get published on verified high-authority websites.",
+    },
+    whatsIncluded: {
+      title: "What's Included",
+      description:
+        "Our expert team crafts compelling, keyword-optimized guest posts that improve your search rankings while engaging your audience. Each article undergoes rigorous research, strategic keyword placement, and SEO best practices to ensure maximum visibility and permanent backlinks on high-authority websites.",
+    },
+    whyItMatters: {
+      title: "Why It Matters",
+      description:
+        "Quality guest posting is the foundation of successful SEO. Search engines reward websites with valuable, original content from authoritative sources, and it keeps your audience coming back. Fresh, well-researched guest posts establish authority in your niche by establishing yourself as a thought leader and driving organic traffic through high-quality backlinks.",
+    },
+    keyBenefits: [
+      "Improved search rankings & keyword research",
+      "Increased organic traffic and visibility",
+      "Higher audience engagement and time-on-page",
+      "Established industry authority",
+      "Long-term SEO benefits",
+      "Professional quality guaranteed",
+    ],
+    processSteps: [
+      {
+        number: 1,
+        title: "Research",
+        description: "In-depth keyword & topic research",
+      },
+      {
+        number: 2,
+        title: "Outline",
+        description: "Strategic content structure",
+      },
+      {
+        number: 3,
+        title: "Write",
+        description: "Expert content creation",
+      },
+      {
+        number: 4,
+        title: "Optimize",
+        description: "SEO & quality review",
+      },
+    ],
+    pricingPlans: {
+      title: "Pricing Plans",
+      description: "Choose the perfect package for your content needs.",
+    },
+  });
 
+  useEffect(() => {
+    fetchContent();
+  }, []);
+
+  const fetchContent = async () => {
+    try {
+      const response = await apiClient.get("/page-contents/guest-posting");
+      if (response.data.success && response.data.data?.sections) {
+        setContent(response.data.data.sections);
+      }
+    } catch (error) {
+      console.log("Using default content");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Pricing plans come from packages API - keeping default structure for now
   const pricingPlans = [
     {
       id: "starter",
@@ -37,7 +136,7 @@ export default function ServicesPage() {
         "General topics",
       ],
       popular: false,
-      packageId: "starter-growth-package", // This will be used for checkout
+      packageId: "starter-growth-package",
     },
     {
       id: "professional",
@@ -77,29 +176,6 @@ export default function ServicesPage() {
     },
   ];
 
-  const processSteps = [
-    {
-      number: 1,
-      title: "Research",
-      description: "In-depth keyword & topic research",
-    },
-    {
-      number: 2,
-      title: "Outline",
-      description: "Strategic content structure",
-    },
-    {
-      number: 3,
-      title: "Write",
-      description: "Expert content creation",
-    },
-    {
-      number: 4,
-      title: "Optimize",
-      description: "SEO & quality review",
-    },
-  ];
-
   const handleOrderNow = (packageId: string) => {
     router.push(`/checkout?package=${packageId}`);
   };
@@ -109,121 +185,79 @@ export default function ServicesPage() {
       <SiteHeader />
 
       <main className="flex-1">
-        {/* Hero Section */}
-        <section className="bg-gradient-to-b from-emerald-50 to-background py-12">
-          <div className="container">
-            <div className="max-w-3xl mx-auto text-center space-y-4">
-              <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
-                Premium Guest Posting Services
-              </h1>
-              <p className="text-xl text-slate-600">
-                High-quality, SEO-optimized guest posts that rank and convert.
-                Get published on verified high-authority websites.
-              </p>
-            </div>
+        {loading ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <p className="text-gray-500">Loading...</p>
           </div>
-        </section>
+        ) : (
+          <>
+            {/* Hero Section */}
+            <section className="bg-gradient-to-b from-emerald-50 to-background py-12">
+              <div className="container">
+                <div className="max-w-3xl mx-auto text-center space-y-4">
+                  <h1 className="text-4xl md:text-5xl font-bold tracking-tight text-slate-900">
+                    {content.hero.title}
+                  </h1>
+                  <p className="text-xl text-slate-600">
+                    {content.hero.description}
+                  </p>
+                </div>
+              </div>
+            </section>
 
-        {/* What's Included Section */}
-        <section className="py-10 bg-background">
-          <div className="container max-w-4xl">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">
-              What's Included
-            </h2>
-            <p className="text-lg text-slate-600 leading-relaxed">
-              Our expert team crafts compelling, keyword-optimized guest posts
-              that improve your search rankings while engaging your audience.
-              Each article undergoes rigorous research, strategic keyword
-              placement, and SEO best practices to ensure maximum visibility and
-              permanent backlinks on high-authority websites.
-            </p>
-          </div>
-        </section>
+            {/* What's Included Section */}
+            <section className="py-10 bg-background">
+              <div className="container max-w-4xl">
+                <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                  {content.whatsIncluded.title}
+                </h2>
+                <p className="text-lg text-slate-600 leading-relaxed">
+                  {content.whatsIncluded.description}
+                </p>
+              </div>
+            </section>
 
-        {/* Why It Matters Section */}
-        <section className="py-10 bg-muted/50">
-          <div className="container max-w-4xl">
-            <h2 className="text-3xl font-bold text-slate-900 mb-4">
-              Why It Matters
-            </h2>
-            <p className="text-lg text-slate-600 leading-relaxed">
-              Quality guest posting is the foundation of successful SEO. Search
-              engines reward websites with valuable, original content from
-              authoritative sources, and it keeps your audience coming back.
-              Fresh, well-researched guest posts establish authority in your
-              niche by establishing yourself as a thought leader and driving
-              organic traffic through high-quality backlinks.
-            </p>
-          </div>
-        </section>
+            {/* Why It Matters Section */}
+            <section className="py-10 bg-muted/50">
+              <div className="container max-w-4xl">
+                <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                  {content.whyItMatters.title}
+                </h2>
+                <p className="text-lg text-slate-600 leading-relaxed">
+                  {content.whyItMatters.description}
+                </p>
+              </div>
+            </section>
 
-        {/* Key Benefits Section */}
-        <section className="py-10 bg-background">
-          <div className="container max-w-6xl">
-            <h2 className="text-3xl font-bold text-slate-900 mb-8">
-              Key Benefits
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    Improved search rankings & keyword research
-                  </p>
+            {/* Key Benefits Section */}
+            <section className="py-10 bg-background">
+              <div className="container max-w-6xl">
+                <h2 className="text-3xl font-bold text-slate-900 mb-8">
+                  Key Benefits
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {content.keyBenefits.map((benefit, index) => (
+                    <div key={index} className="flex items-start gap-3">
+                      <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
+                      <div>
+                        <p className="font-semibold text-slate-900">
+                          {benefit}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    Increased organic traffic and visibility
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    Higher audience engagement and time-on-page
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    Established industry authority
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    Long-term SEO benefits
-                  </p>
-                </div>
-              </div>
-              <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-6 w-6 text-emerald-600 shrink-0 mt-1" />
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    Professional quality guaranteed
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
+            </section>
 
-        {/* Process Steps Section */}
-        <section className="py-10 bg-muted/50">
-          <div className="container max-w-6xl">
-            <h2 className="text-3xl font-bold text-slate-900 mb-12 text-center">
-              Our Guest Posting Process
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-              {processSteps.map((step) => {
+            {/* Process Steps Section */}
+            <section className="py-10 bg-muted/50">
+              <div className="container max-w-6xl">
+                <h2 className="text-3xl font-bold text-slate-900 mb-12 text-center">
+                  Our Guest Posting Process
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                  {content.processSteps.map((step) => {
                 return (
                   <Card key={step.number} className="text-center border-slate-200 shadow-sm">
                     <CardHeader className=" pt-2">
@@ -248,17 +282,17 @@ export default function ServicesPage() {
           </div>
         </section>
 
-        {/* Pricing Plans Section */}
-        <section className="py-12 bg-background">
-          <div className="container max-w-6xl">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-slate-900 mb-4">
-                Pricing Plans
-              </h2>
-              <p className="text-lg text-slate-600">
-                Choose the perfect package for your content needs.
-              </p>
-            </div>
+            {/* Pricing Plans Section */}
+            <section className="py-12 bg-background">
+              <div className="container max-w-6xl">
+                <div className="text-center mb-12">
+                  <h2 className="text-3xl font-bold text-slate-900 mb-4">
+                    {content.pricingPlans.title}
+                  </h2>
+                  <p className="text-lg text-slate-600">
+                    {content.pricingPlans.description}
+                  </p>
+                </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               {pricingPlans.map((plan) => (
@@ -320,6 +354,8 @@ export default function ServicesPage() {
             </div>
           </div>
         </section>
+          </>
+        )}
       </main>
 
       <SiteFooter />
