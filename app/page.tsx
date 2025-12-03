@@ -48,21 +48,28 @@ interface Site {
   image_url: string | null;
 }
 
-interface Package {
-  _id: string;
+interface PricingPlan {
+  id: string;
   name: string;
-  description: string;
   price: number;
-  discounted_price: number;
+  originalPrice: number;
+  quantity: string;
   features: string[];
-  category: string;
-  slug?: string;
-  imageUrl?: string;
+  popular: boolean;
+  packageId: string;
+}
+
+interface PageContent {
+  pricingPlans: {
+    title: string;
+    description: string;
+    plans: PricingPlan[];
+  };
 }
 
 export default function HomePage() {
   const [sites, setSites] = useState<Site[]>([]);
-  const [packages, setPackages] = useState<Package[]>([]);
+  const [pricingContent, setPricingContent] = useState<PageContent | null>(null);
   const [loading, setLoading] = useState(true);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
     new Set()
@@ -71,7 +78,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchFeaturedSites();
-    fetchPackages();
+    fetchPricingContent();
   }, []);
 
   async function fetchFeaturedSites() {
@@ -119,34 +126,32 @@ export default function HomePage() {
     }
   }
 
-  async function fetchPackages() {
+  async function fetchPricingContent() {
     try {
-      const response = await apiClient.get("/packages/active");
-      const packagesData = Array.isArray(response.data.data) 
-        ? response.data.data 
-        : response.data.data?.packages || [];
-      
-      const activePackages = packagesData.map((pkg: any) => ({
-        _id: pkg._id,
-        name: pkg.name,
-        description: pkg.description,
-        price: pkg.price,
-        discounted_price: pkg.discounted_price,
-        features: pkg.features || [],
-        category: pkg.category,
-        slug: pkg.slug,
-        imageUrl: pkg.imageUrl,
-      }));
-      
-      // Sort packages: Starter, Pro, Growth (or by price)
-      const sortedPackages = activePackages.sort((a: Package, b: Package) => 
-        a.discounted_price - b.discounted_price
-      );
-      
-      setPackages(sortedPackages);
-    } catch (error: any) {
-      console.error("[Homepage] Error fetching packages:", error);
-      setPackages([]);
+      const response = await apiClient.get("/page-contents/guest-posting");
+      if (response.data.success && response.data.data?.sections?.pricingPlans) {
+        setPricingContent({
+          pricingPlans: response.data.data.sections.pricingPlans,
+        });
+      } else {
+        // Use default content if not found
+        setPricingContent({
+          pricingPlans: {
+            title: "Our Link Building Packages & Pricing",
+            description: "Our monthly link building packages provide a fully managed service, so that you can focus on other aspects of SEO. All of our packages and plans include detailed strategy & bespoke outreach.",
+            plans: [],
+          },
+        });
+      }
+    } catch (error) {
+      console.log("[Homepage] Using default pricing content");
+      setPricingContent({
+        pricingPlans: {
+          title: "Our Link Building Packages & Pricing",
+          description: "Our monthly link building packages provide a fully managed service, so that you can focus on other aspects of SEO. All of our packages and plans include detailed strategy & bespoke outreach.",
+          plans: [],
+        },
+      });
     }
   }
 
@@ -412,40 +417,38 @@ export default function HomePage() {
               Monthly Packages
             </p>
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Our Link Building Packages & Pricing
+              {pricingContent?.pricingPlans.title || "Our Link Building Packages & Pricing"}
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Our monthly link building packages provide a fully managed service, so that you can focus on other aspects of SEO. All of our packages and plans include detailed strategy & bespoke outreach.
+              {pricingContent?.pricingPlans.description || "Our monthly link building packages provide a fully managed service, so that you can focus on other aspects of SEO. All of our packages and plans include detailed strategy & bespoke outreach."}
             </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {packages.length > 0 ? (
-              packages.slice(0, 3).map((pkg, index) => {
-                const isPopular = index === 1; // Middle package is popular
-                const packageId = pkg.slug || pkg._id;
-                const displayName = pkg.name.replace(/Package|Growth|Package/gi, "").trim() || pkg.name;
+            {pricingContent?.pricingPlans.plans && pricingContent.pricingPlans.plans.length > 0 ? (
+              pricingContent.pricingPlans.plans.map((plan) => {
+                const displayName = plan.name.replace(/Package|Growth|Package/gi, "").trim() || plan.name;
                 
                 return (
                   <Card 
-                    key={pkg._id}
+                    key={plan.id}
                     className={`flex flex-col hover:shadow-lg transition-all ${
-                      isPopular ? "border-2 border-emerald-500 relative" : ""
+                      plan.popular ? "border-2 border-emerald-500 relative" : ""
                     }`}
                   >
-                    {isPopular && (
+                    {plan.popular && (
                       <div className="absolute -top-4 left-1/2 -translate-x-1/2">
                         <Badge className="bg-emerald-500 text-white px-4 py-1">
                           POPULAR
                         </Badge>
                       </div>
                     )}
-                    <CardHeader className={`text-center pb-4 ${isPopular ? "pt-6" : ""}`}>
+                    <CardHeader className={`text-center pb-4 ${plan.popular ? "pt-6" : ""}`}>
                       <CardTitle className="text-2xl mb-4">{displayName}</CardTitle>
                       <div className="space-y-2 mb-6">
                         <div className="flex items-baseline justify-center gap-1">
                           <span className="text-4xl font-bold text-slate-900">
-                            ${pkg.discounted_price}
+                            ${plan.price}
                           </span>
                           <span className="text-lg text-muted-foreground">/ mo</span>
                         </div>
@@ -453,20 +456,20 @@ export default function HomePage() {
                     </CardHeader>
                     <CardContent className="flex-1 space-y-4">
                       <div className="space-y-3">
-                        {pkg.features.slice(0, 1).map((feature, idx) => (
+                        {plan.features.slice(0, 1).map((feature, idx) => (
                           <div key={idx} className="flex items-start gap-2">
                             <Zap className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
                             <span className="text-sm">{feature}</span>
                           </div>
                         ))}
-                        {pkg.features.slice(1).map((feature, idx) => (
+                        {plan.features.slice(1).map((feature, idx) => (
                           <div key={idx} className="flex items-start gap-2">
                             <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
                             <span className="text-sm">{feature}</span>
                           </div>
                         ))}
                       </div>
-                      {isPopular && (
+                      {plan.popular && (
                         <div className="pt-2">
                           <Badge variant="outline" className="text-xs">
                             Limited availability
@@ -477,7 +480,7 @@ export default function HomePage() {
                     <CardFooter>
                       <Button 
                         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => router.push(`/checkout?package=${packageId}`)}
+                        onClick={() => router.push(`/checkout?package=${plan.packageId}`)}
                       >
                         Buy Now
                       </Button>
@@ -509,7 +512,7 @@ export default function HomePage() {
                 <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
                   <Button 
                     variant="outline"
-                    className="bg-white hover:bg-slate-50"
+                    className="bg-white hover:bg-slate-50 text-slate-900 hover:text-slate-900 border-slate-300"
                     asChild
                   >
                     <Link href="/contact">Let's talk</Link>
