@@ -5,7 +5,7 @@ import { SiteHeader } from "@/components/site-header"
 import { SiteFooter } from "@/components/site-footer"
 import { Button } from "@/components/ui/button"
 import Link from "next/link"
-import { LayoutDashboard, ShoppingBag, Globe, Users, CreditCard, Settings, FileText, PackageIcon, Wallet, FileEdit } from "lucide-react"
+import { LayoutDashboard, ShoppingBag, Globe, Users, CreditCard, Settings, FileText, PackageIcon, Wallet, FileEdit, Link2 } from "lucide-react"
 import { usePathname } from "next/navigation"
 
 export function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -108,6 +108,20 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
                   <Link href="/admin/pages/guest-posting">
                     <FileEdit className="mr-2 h-4 w-4" />
                     Guest Posting
+                  </Link>
+                </Button>
+                <Button
+                  variant="ghost"
+                  className={`w-full justify-start ${
+                    isActive("/admin/link-building")
+                      ? "bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                      : "text-gray-700 hover:bg-gray-100"
+                  }`}
+                  asChild
+                >
+                  <Link href="/admin/link-building">
+                    <Link2 className="mr-2 h-4 w-4" />
+                    Link Building Plans
                   </Link>
                 </Button>
                 <Button

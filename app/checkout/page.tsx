@@ -67,9 +67,11 @@ if (typeof window !== "undefined") {
 function CheckoutForm({
   item,
   itemType,
+  linkBuildingId,
 }: {
   item: Site | Package;
   itemType: "site" | "package";
+  linkBuildingId?: string | null;
 }) {
   const router = useRouter();
   const { user } = useAuth();
@@ -155,9 +157,10 @@ function CheckoutForm({
   const prepareOrderData = async () => {
     const userId = user?.id || "guest";
     const price = getPrice();
+    
     const orderData: any = {
       userId: userId,
-      orderType: itemType,
+      orderType: linkBuildingId ? "link-building" : itemType,
       customerName: name,
       customerEmail: email,
       totalAmount: price,
@@ -168,7 +171,13 @@ function CheckoutForm({
 
     // Add type-specific fields
     if (itemType === "package") {
-      orderData.packageId = (item as any)._id || item.id;
+      if (linkBuildingId) {
+        // Link building plan
+        orderData.linkBuildingPlanId = (item as any)._id || item.id;
+      } else {
+        // Regular package
+        orderData.packageId = (item as any)._id || item.id;
+      }
       if (specialInstructions)
         orderData.specialInstructions = specialInstructions;
     } else {
@@ -807,6 +816,7 @@ function CheckoutContent() {
   const searchParams = useSearchParams();
   const siteId = searchParams.get("site");
   const packageId = searchParams.get("package");
+  const linkBuildingId = searchParams.get("link-building");
 
   const [item, setItem] = useState<Site | Package | null>(null);
   const [itemType, setItemType] = useState<"site" | "package">("site");
@@ -815,7 +825,7 @@ function CheckoutContent() {
 
   useEffect(() => {
     const initCheckout = async () => {
-      if (!siteId && !packageId) {
+      if (!siteId && !packageId && !linkBuildingId) {
         setError("No item selected");
         setLoading(false);
         return;
@@ -826,7 +836,43 @@ function CheckoutContent() {
         let type: "site" | "package" = "site";
         let price = 0;
 
-        if (packageId) {
+        if (linkBuildingId) {
+          // Fetch link building plan from backend
+          try {
+            const response = await apiClient.get(`/link-building/slug/${linkBuildingId}`);
+            const planData = response.data.data;
+            // Convert link building plan to package format for checkout
+            itemData = {
+              _id: planData._id,
+              name: planData.name,
+              description: `${planData.linksPerMonth} Links Per Month - ${planData.name} Plan`,
+              price: planData.price,
+              discounted_price: planData.price,
+              features: planData.features,
+              category: "Link Building",
+              isActive: planData.isActive,
+            } as Package;
+            type = "package";
+            if (itemData) {
+              price = (itemData as Package).discounted_price;
+            }
+          } catch (linkBuildingError: any) {
+            console.error("[Checkout] Link building plan fetch error:", linkBuildingError);
+            if (linkBuildingError.response?.status === 429) {
+              throw new Error(
+                "Too many requests. Please wait a moment and refresh the page."
+              );
+            }
+            if (linkBuildingError.response?.status === 404) {
+              throw new Error(
+                `Link building plan not found. Please ensure the plan slug "${linkBuildingId}" exists in the database. Contact admin if this issue persists.`
+              );
+            }
+            throw new Error(
+              "Failed to load link building plan. Please try again or contact support."
+            );
+          }
+        } else if (packageId) {
           // Fetch package from backend
           try {
             const response = await apiClient.get(`/packages/${packageId}`);
@@ -837,6 +883,11 @@ function CheckoutContent() {
             }
           } catch (packageError: any) {
             console.error("[Checkout] Package fetch error:", packageError);
+            if (packageError.response?.status === 429) {
+              throw new Error(
+                "Too many requests. Please wait a moment and refresh the page."
+              );
+            }
             if (packageError.response?.status === 404) {
               throw new Error(
                 `Package not found. Please ensure the package slug "${packageId}" exists in the database. Contact admin if this issue persists.`
@@ -905,7 +956,7 @@ function CheckoutContent() {
     };
 
     initCheckout();
-  }, [siteId, packageId]);
+  }, [siteId, packageId, linkBuildingId]);
 
   if (loading) {
     return (
@@ -1084,13 +1135,13 @@ function CheckoutContent() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <PayPalScriptProvider
+                <PayPalScriptProvider
                 options={{
                   clientId: PAYPAL_CLIENT_ID,
                   currency: "USD",
                   intent: "capture",
                 }}>
-                <CheckoutForm item={item} itemType={itemType} />
+                <CheckoutForm item={item} itemType={itemType} linkBuildingId={linkBuildingId} />
               </PayPalScriptProvider>
             </CardContent>
           </Card>

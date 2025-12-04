@@ -48,28 +48,21 @@ interface Site {
   image_url: string | null;
 }
 
-interface PricingPlan {
-  id: string;
+interface LinkBuildingPlan {
+  _id: string;
   name: string;
+  slug?: string;
   price: number;
-  originalPrice: number;
-  quantity: string;
+  linksPerMonth: string;
   features: string[];
   popular: boolean;
-  packageId: string;
-}
-
-interface PageContent {
-  pricingPlans: {
-    title: string;
-    description: string;
-    plans: PricingPlan[];
-  };
+  isActive: boolean;
+  order: number;
 }
 
 export default function HomePage() {
   const [sites, setSites] = useState<Site[]>([]);
-  const [pricingContent, setPricingContent] = useState<PageContent | null>(null);
+  const [linkBuildingPlans, setLinkBuildingPlans] = useState<LinkBuildingPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedDescriptions, setExpandedDescriptions] = useState<Set<string>>(
     new Set()
@@ -78,7 +71,7 @@ export default function HomePage() {
 
   useEffect(() => {
     fetchFeaturedSites();
-    fetchPricingContent();
+    fetchLinkBuildingPlans();
   }, []);
 
   async function fetchFeaturedSites() {
@@ -126,32 +119,23 @@ export default function HomePage() {
     }
   }
 
-  async function fetchPricingContent() {
+  async function fetchLinkBuildingPlans() {
     try {
-      const response = await apiClient.get("/page-contents/guest-posting");
-      if (response.data.success && response.data.data?.sections?.pricingPlans) {
-        setPricingContent({
-          pricingPlans: response.data.data.sections.pricingPlans,
-        });
-      } else {
-        // Use default content if not found
-        setPricingContent({
-          pricingPlans: {
-            title: "Our Link Building Packages & Pricing",
-            description: "Our monthly link building packages provide a fully managed service, so that you can focus on other aspects of SEO. All of our packages and plans include detailed strategy & bespoke outreach.",
-            plans: [],
-          },
-        });
+      const response = await apiClient.get("/link-building/active");
+      if (response.data.success && response.data.data) {
+        setLinkBuildingPlans(response.data.data);
       }
-    } catch (error) {
-      console.log("[Homepage] Using default pricing content");
-      setPricingContent({
-        pricingPlans: {
-          title: "Our Link Building Packages & Pricing",
-          description: "Our monthly link building packages provide a fully managed service, so that you can focus on other aspects of SEO. All of our packages and plans include detailed strategy & bespoke outreach.",
-          plans: [],
-        },
-      });
+    } catch (error: any) {
+      console.log("[Homepage] Error fetching link building plans:", error);
+      // Handle rate limiting error
+      if (error.response?.status === 429) {
+        console.warn("[Homepage] Rate limited for link building plans, retrying in 5 seconds...");
+        setTimeout(() => {
+          fetchLinkBuildingPlans();
+        }, 5000);
+        return;
+      }
+      setLinkBuildingPlans([]);
     }
   }
 
@@ -425,62 +409,70 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-            {pricingContent?.pricingPlans.plans && pricingContent.pricingPlans.plans.length > 0 ? (
-              pricingContent.pricingPlans.plans.map((plan) => {
-                const displayName = plan.name.replace(/Package|Growth|Package/gi, "").trim() || plan.name;
+            {linkBuildingPlans.length > 0 ? (
+              linkBuildingPlans.map((plan) => {
+                // Determine badge color based on plan
+                const getBadgeColor = () => {
+                  if (plan.popular) return "bg-emerald-500 text-white";
+                  if (plan.name.toLowerCase().includes("growth")) return "bg-slate-900 text-white";
+                  return "bg-slate-100 text-slate-700";
+                };
+
+                const getBadgeIconColor = () => {
+                  if (plan.popular) return "text-emerald-500";
+                  return "text-orange-500";
+                };
                 
                 return (
                   <Card 
-                    key={plan.id}
-                    className={`flex flex-col hover:shadow-lg transition-all ${
-                      plan.popular ? "border-2 border-emerald-500 relative" : ""
+                    key={plan._id}
+                    className={`flex flex-col hover:shadow-lg transition-all relative ${
+                      plan.popular ? "border-2 border-emerald-500" : ""
                     }`}
                   >
                     {plan.popular && (
-                      <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                        <Badge className="bg-emerald-500 text-white px-4 py-1">
+                      <div className="absolute -top-3 right-4">
+                        <Badge className="bg-emerald-500 text-white px-3 py-1 text-xs font-semibold">
                           POPULAR
                         </Badge>
                       </div>
                     )}
-                    <CardHeader className={`text-center pb-4 ${plan.popular ? "pt-6" : ""}`}>
-                      <CardTitle className="text-2xl mb-4">{displayName}</CardTitle>
-                      <div className="space-y-2 mb-6">
+                    <CardHeader className={`text-center pb-4 ${plan.popular ? "pt-6" : "pt-6"}`}>
+                      <CardTitle className="text-2xl mb-4">{plan.name}</CardTitle>
+                      <div className="space-y-3 mb-6">
                         <div className="flex items-baseline justify-center gap-1">
                           <span className="text-4xl font-bold text-slate-900">
-                            ${plan.price}
+                            ${plan.price.toLocaleString()}
                           </span>
                           <span className="text-lg text-muted-foreground">/ mo</span>
                         </div>
+                        <Badge className={`${getBadgeColor()} px-3 py-1 text-xs font-medium flex items-center gap-1 w-fit mx-auto`}>
+                          <Zap className={`h-3 w-3 ${getBadgeIconColor()}`} />
+                          {plan.linksPerMonth} Links Per Month
+                        </Badge>
                       </div>
                     </CardHeader>
                     <CardContent className="flex-1 space-y-4">
                       <div className="space-y-3">
-                        {plan.features.slice(0, 1).map((feature, idx) => (
-                          <div key={idx} className="flex items-start gap-2">
-                            <Zap className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                            <span className="text-sm">{feature}</span>
-                          </div>
-                        ))}
-                        {plan.features.slice(1).map((feature, idx) => (
+                        {plan.features.map((feature, idx) => (
                           <div key={idx} className="flex items-start gap-2">
                             <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
-                            <span className="text-sm">{feature}</span>
+                            <span className="text-sm text-slate-700">{feature}</span>
                           </div>
                         ))}
                       </div>
                       {plan.popular && (
                         <div className="pt-2">
-                          <Badge variant="outline" className="text-xs">
+                          <p className="text-xs text-muted-foreground italic">
                             Limited availability
-                          </Badge>
+                          </p>
                         </div>
                       )}
                     </CardContent>
                     <CardFooter>
                       <Button 
-                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
-                        onClick={() => router.push(`/checkout?package=${plan.packageId}`)}
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-md"
+                        onClick={() => router.push(`/checkout?link-building=${plan.slug || plan._id}`)}
                       >
                         Buy Now
                       </Button>
@@ -491,7 +483,7 @@ export default function HomePage() {
             ) : (
               // Loading or empty state
               <div className="col-span-3 text-center py-12">
-                <p className="text-muted-foreground">Loading packages...</p>
+                <p className="text-muted-foreground">Loading plans...</p>
               </div>
             )}
           </div>
@@ -543,7 +535,7 @@ export default function HomePage() {
             {/* Book a call button below */}
             <div className="text-center mt-6">
               <Button 
-                className="bg-slate-900 hover:bg-slate-800 text-white"
+                className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg"
                 size="lg"
                 asChild
               >
