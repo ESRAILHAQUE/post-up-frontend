@@ -532,14 +532,14 @@ export default function HomePage() {
               </CardContent>
             </Card>
             
-            {/* Book a call button below */}
+            {/* Get a Custom Quote button below */}
             <div className="text-center mt-6">
               <Button 
                 className="bg-slate-900 hover:bg-slate-800 text-white rounded-lg"
                 size="lg"
                 asChild
               >
-                <Link href="/contact">Book a call</Link>
+                <Link href="/contact">Get a Custom Quote</Link>
               </Button>
             </div>
           </div>
