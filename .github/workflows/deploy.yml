@@ -70,15 +70,47 @@ jobs:
           username: ${{ secrets.VPS_USERNAME }}
           key: ${{ secrets.VPS_SSH_KEY }}
           port: ${{ secrets.VPS_PORT || 22 }}
+          timeout: 120s
+          command_timeout: 15m
           script: |
             cd /var/www/guestpostup/frontend
-            npm ci --production --legacy-peer-deps
-            if pm2 list | grep -q "guestpostup-frontend"; then
-              pm2 stop guestpostup-frontend
-              pm2 delete guestpostup-frontend
+            
+            # Check if package.json changed (only install if needed)
+            if [ -f ".git/HEAD" ]; then
+              git fetch origin main 2>/dev/null || true
+              if git diff HEAD origin/main --name-only 2>/dev/null | grep -q "package.json\|package-lock.json"; then
+                echo "📦 Package files changed, installing dependencies..."
+                nice -n 10 npm ci --production --legacy-peer-deps
+              else
+                echo "⏭️  Skipping npm install (no package changes)"
+              fi
+            else
+              # If git not available, check if node_modules exists
+              if [ ! -d "node_modules" ]; then
+                echo "📦 node_modules not found, installing dependencies..."
+                nice -n 10 npm ci --production --legacy-peer-deps
+              else
+                echo "⏭️  Skipping npm install (node_modules exists)"
+              fi
             fi
-            pm2 start ecosystem.config.js
+            
+            # Zero-downtime restart using PM2 reload (graceful restart)
+            if pm2 list | grep -q "guestpostup-frontend"; then
+              echo "🔄 Gracefully reloading frontend (zero downtime)..."
+              pm2 reload guestpostup-frontend --update-env || {
+                echo "Reload failed, trying restart..."
+                pm2 restart guestpostup-frontend --update-env || {
+                  echo "Restart failed, starting fresh..."
+                  pm2 delete guestpostup-frontend || true
+                  pm2 start ecosystem.config.js
+                }
+              }
+            else
+              echo "🚀 Starting new PM2 process..."
+              pm2 start ecosystem.config.js
+            fi
+            
             pm2 save
-            sleep 3
-            pm2 status
-            pm2 logs guestpostup-frontend --lines 20 --nostream
+            sleep 2
+            echo "✅ Deployment complete"
+            pm2 show guestpostup-frontend | head -15
